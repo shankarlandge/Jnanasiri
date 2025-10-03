@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import StudentLayout from '../../components/student/StudentLayout';
 import {
   BookOpenIcon,
   BuildingLibraryIcon,
@@ -77,29 +76,28 @@ const StudentDashboard = () => {
   const courseProgress = user?.course_progress || [];
 
   return (
-    <StudentLayout>
-      <div className="space-y-6 lg:space-y-8 max-w-7xl mx-auto">
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8 w-full">
         {/* Welcome Banner */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-emerald-600 rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-white">
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-emerald-600 rounded-xl lg:rounded-2xl p-4 lg:p-5 text-white">
           <div className="relative z-10">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-              <div className="mb-6 lg:mb-0">
-                <div className="flex items-center space-x-3 lg:space-x-4 mb-4">
-                  <div className="w-12 h-12 lg:w-16 lg:h-16 bg-white/20 backdrop-blur-sm rounded-xl lg:rounded-2xl flex items-center justify-center">
-                    <span className="text-lg lg:text-2xl font-bold">
+              <div className="mb-4 lg:mb-0">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white/20 backdrop-blur-sm rounded-lg lg:rounded-xl flex items-center justify-center">
+                    <span className="text-base lg:text-lg font-bold">
                       {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold">
+                    <h1 className="text-lg lg:text-xl xl:text-2xl font-bold">
                       Welcome back, {user?.name?.split(' ')[0] || 'Student'}! 👋
                     </h1>
-                    <p className="text-white/90 text-base lg:text-lg mt-1">
+                    <p className="text-white/90 text-sm lg:text-base">
                       Ready to continue your learning journey?
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0 text-white/90 text-sm lg:text-base">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0 text-white/90 text-xs lg:text-sm">
                   <div className="flex items-center space-x-2">
                     <span className="font-medium">Student ID:</span>
                     <span>{user?.student_id || 'Loading...'}</span>
@@ -112,19 +110,19 @@ const StudentDashboard = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                 <Link
                   to="/student/courses"
-                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all px-4 py-2.5 lg:px-6 lg:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 text-sm lg:text-base"
+                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all px-4 py-2 lg:px-5 lg:py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 text-sm"
                 >
-                  <BookOpenIcon className="w-4 h-4 lg:w-5 lg:h-5" />
+                  <BookOpenIcon className="w-4 h-4" />
                   <span>Browse Courses</span>
                 </Link>
                 <Link
                   to="/student/profile"
-                  className="bg-white text-blue-600 hover:bg-gray-100 transition-all px-4 py-2.5 lg:px-6 lg:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 text-sm lg:text-base"
+                  className="bg-white text-blue-600 hover:bg-gray-100 transition-all px-4 py-2 lg:px-5 lg:py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 text-sm"
                 >
-                  <SparklesIcon className="w-4 h-4 lg:w-5 lg:h-5" />
+                  <SparklesIcon className="w-4 h-4" />
                   <span>View Profile</span>
                 </Link>
               </div>
@@ -132,13 +130,13 @@ const StudentDashboard = () => {
           </div>
           
           {/* Background Decorations */}
-          <div className="absolute -top-10 -right-10 w-24 h-24 lg:w-32 lg:h-32 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 lg:w-40 lg:h-40 bg-emerald-300/20 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 right-1/4 w-16 h-16 lg:w-20 lg:h-20 bg-yellow-300/20 rounded-full blur-2xl"></div>
+          <div className="absolute -top-6 -right-6 w-16 h-16 lg:w-20 lg:h-20 bg-white/10 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-6 -left-6 w-20 h-20 lg:w-24 lg:h-24 bg-emerald-300/20 rounded-full blur-2xl"></div>
+          <div className="absolute top-1/3 right-1/4 w-12 h-12 lg:w-16 lg:h-16 bg-yellow-300/20 rounded-full blur-xl"></div>
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           {quickStats.map((stat, index) => {
             const Icon = stat.icon;
             return (
@@ -162,7 +160,7 @@ const StudentDashboard = () => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Course Progress & Recent Activity */}
           <div className="xl:col-span-2 space-y-6 lg:space-y-8">
             {/* Course Progress */}
@@ -370,7 +368,6 @@ const StudentDashboard = () => {
           </div>
         </div>
       </div>
-    </StudentLayout>
   );
 };
 

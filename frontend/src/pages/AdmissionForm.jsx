@@ -298,24 +298,22 @@ const AdmissionForm = () => {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Hero Section */}
-      <section className="hero relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-600/90 to-secondary-600/90"></div>
-        <div className="container relative z-10 text-center">
-          <div className="max-w-4xl mx-auto animate-fade-in">
-            <ClipboardDocumentIcon className="w-16 h-16 text-white mx-auto mb-6" />
-            <h1 className="text-5xl lg:text-6xl font-bold text-white mb-6">
+      {/* Hero Section - Compact */}
+      <section className="bg-gradient-to-br from-primary-600/90 to-secondary-600/90 py-12">
+        <div className="container text-center">
+          <div className="max-w-3xl mx-auto animate-fade-in">
+            <ClipboardDocumentIcon className="w-12 h-12 text-white mx-auto mb-4" />
+            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-3">
               Admission Application
             </h1>
-            <p className="text-xl text-white/90 mb-8 leading-relaxed">
-                            Take the first step towards your bright future at Jnana Siri Educational Institute. 
-              Complete your admission application below.
+            <p className="text-lg text-white/90 leading-relaxed">
+              Complete your admission application below
             </p>
           </div>
         </div>
       </section>
 
-      <div className="container py-16">
+      <div className="container py-8">
         {/* Progress Steps */}
         <div className="mb-12">
           <div className="flex items-center justify-center space-x-8 overflow-x-auto">

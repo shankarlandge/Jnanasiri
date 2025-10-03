@@ -1,0 +1,77 @@
+🚀 **JANASHIRI LMS - DEPLOYMENT INSTRUCTIONS**
+
+Hey Team! 👋
+
+New project ready for AWS EC2 deployment. Here's everything you need:
+
+**📦 DOCKER IMAGES (Ready on Docker Hub):**
+• Backend: `sanketsmane/janashiri-lms-backend:1.0`
+• Frontend: `sanketsmane/janashiri-lms-frontend:1.0`
+
+**🖥️ SERVER REQUIREMENTS:**
+• AWS EC2: t3.medium+ (4GB+ RAM)
+• OS: Ubuntu 22.04 LTS
+• Storage: 20GB+ SSD
+• Security Group: Open ports 22, 80, 443, 3002
+
+**⚡ QUICK DEPLOY (3 commands):**
+```bash
+curl -o deploy-aws.sh https://raw.githubusercontent.com/SanketsMane/Janashri_LMS/main/deploy-aws.sh
+chmod +x deploy-aws.sh
+./deploy-aws.sh
+```
+
+**🔧 MANUAL DEPLOY:**
+```bash
+# 1. Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker ubuntu
+
+# 2. Create project folder
+mkdir ~/janashiri-lms && cd ~/janashiri-lms
+
+# 3. Download config
+curl -o docker-compose.yml https://raw.githubusercontent.com/SanketsMane/Janashri_LMS/main/docker-compose.production.yml
+
+# 4. Create environment file
+curl -o .env.production https://raw.githubusercontent.com/SanketsMane/Janashri_LMS/main/.env.production.example
+
+# 5. Deploy
+docker-compose up -d
+```
+
+**🔐 CRITICAL - UPDATE THESE IN .env.production:**
+• MONGODB_URI=mongodb+srv://[ASK_FOR_CREDENTIALS]
+• JWT_SECRET=[GENERATE_RANDOM_64_CHARS]
+• CLOUDINARY_CLOUD_NAME=[ASK_FOR_CLOUDINARY]
+• EMAIL_USER=[GMAIL_FOR_NOTIFICATIONS]
+• ALLOWED_ORIGINS=http://SERVER_IP,https://domain.com
+
+**✅ VERIFICATION:**
+```bash
+curl http://localhost:3002/api/health
+curl http://SERVER_IP/
+docker-compose ps
+```
+
+**📚 FULL DOCS:**
+https://github.com/SanketsMane/Janashri_LMS/blob/main/AWS_DEPLOYMENT_GUIDE.md
+
+**🚨 TROUBLESHOOTING:**
+• Logs: `docker-compose logs -f`
+• Restart: `docker-compose restart`
+• Update: `docker-compose pull && docker-compose up -d`
+
+**📞 NEED HELP?**
+• All configs ready in GitHub repo
+• Auto-deployment script handles everything
+• Images tested and production-ready
+
+Let me know when deployed! 🎉
+
+**Expected Result:**
+• Frontend: http://SERVER_IP
+• Backend API: http://SERVER_IP:3002/api/health
+• Should see "LMS Server is running" message
+
+Thanks! 🙏

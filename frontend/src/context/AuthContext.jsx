@@ -100,10 +100,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = () => {
       try {
+        console.log('AuthContext: Initializing auth...');
         const token = localStorage.getItem('token');
         const user = localStorage.getItem('user');
 
         if (token && user) {
+          console.log('AuthContext: Found stored credentials, parsing user...');
           const parsedUser = JSON.parse(user);
           dispatch({
             type: AUTH_ACTIONS.LOGIN_SUCCESS,
@@ -113,14 +115,19 @@ export const AuthProvider = ({ children }) => {
             },
           });
           
+          console.log('AuthContext: Verifying token...');
           // Verify token is still valid
           verifyToken();
         } else {
+          console.log('AuthContext: No stored credentials found');
           dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        logout();
+        // Don't call logout here to avoid loops
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        dispatch({ type: AUTH_ACTIONS.LOGOUT });
       }
     };
 
@@ -137,7 +144,10 @@ export const AuthProvider = ({ children }) => {
       });
     } catch (error) {
       console.error('Token verification failed:', error);
-      logout();
+      // Don't call logout here to avoid loops - just clear state
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
     } finally {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
     }

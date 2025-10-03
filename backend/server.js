@@ -12,27 +12,104 @@ import studentRoutes from './routes/student.js';
 import adminRoutes from './routes/admin.js';
 import publicRoutes from './routes/public.js';
 import galleryRoutes from './routes/gallery.js';
+import notificationRoutes from './routes/notifications.js';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3002;
 
 // Security middleware
 app.use(helmet());
 
-// Rate limiting
+// Rate limiting - enabled for production
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // requests per windowMs
+  skip: (req) => {
+    // Skip rate limiting for OPTIONS requests (CORS preflight) and in development
+    return req.method === 'OPTIONS' || process.env.NODE_ENV === 'development';
+  },
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again later.',
+    retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000) / 1000)
+  },
+  standardHeaders: true,
+  legacyHeaders: false
 });
-app.use(limiter);
 
-// CORS configuration
+// Apply rate limiting only in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(limiter);
+  console.log('✅ Rate limiting enabled for production');
+}
+
+// CORS configuration - environment-aware setup
+const getAllowedOrigins = () => {
+  const developmentOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174', 
+    'http://localhost:5175',
+    'http://localhost:5176',
+    'http://localhost:5177'
+  ];
+  
+  const productionOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+    : [];
+
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (frontendUrl) {
+    productionOrigins.push(frontendUrl);
+  }
+
+  return process.env.NODE_ENV === 'production' 
+    ? [...new Set(productionOrigins)] // Remove duplicates
+    : [...developmentOrigins, ...productionOrigins].filter(Boolean);
+};
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    const allowedOrigins = getAllowedOrigins();
+    
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    console.warn(`🚫 CORS blocked origin: ${origin}`);
+    callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With', 
+    'Content-Type', 
+    'Accept',
+    'Authorization',
+    'Cache-Control',
+    'X-Access-Token'
+  ],
+  exposedHeaders: ['Content-Length', 'X-Access-Token'],
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 }));
+
+// Handle preflight requests explicitly
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || 'http://localhost:5173');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD');
+  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization,Cache-Control,X-Access-Token');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  res.sendStatus(200);
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -45,6 +122,7 @@ app.use('/api/student', studentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -52,6 +130,16 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     message: 'LMS Server is running',
     timestamp: new Date().toISOString()
+  });
+});
+
+// Test CORS endpoint
+app.get('/api/notifications/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'CORS is working properly!',
+    timestamp: new Date().toISOString(),
+    origin: req.headers.origin
   });
 });
 

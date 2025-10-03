@@ -2,10 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 // Import components
 import Navbar from './components/Navbar';
 import Loading from './components/Loading';
+import AdminLayout from './components/admin/AdminLayout';
 import StudentLayout from './components/student/StudentLayout';
 
 // Public pages
@@ -16,11 +18,15 @@ import Contact from './pages/Contact';
 import AdmissionForm from './pages/AdmissionForm';
 import AdmissionStatus from './pages/AdmissionStatus';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import OTPVerification from './pages/OTPVerification';
+import ResetPassword from './pages/ResetPassword';
 
 // Student pages
 import StudentDashboard from './pages/student/Dashboard';
 import StudentProfile from './pages/student/Profile';
 import StudentIdCard from './pages/student/IdCard';
+import Settings from './pages/student/Settings';
 import AccountSettings from './pages/student/AccountSettings';
 
 // Admin pages
@@ -28,6 +34,8 @@ import AdminDashboard from './pages/admin/Dashboard';
 import AdminAdmissions from './pages/admin/Admissions';
 import AdminStudents from './pages/admin/Students';
 import AdminContacts from './pages/admin/Contacts';
+import AdminNotifications from './pages/admin/Notifications';
+import AdminSettings from './pages/admin/Settings';
 import AdminCourses from './pages/admin/Courses';
 import AdminLibrary from './pages/admin/Library';
 import AdminExams from './pages/admin/Exams';
@@ -94,7 +102,7 @@ const AppRoutes = () => {
       <Route path="/admission" element={<AppLayout><AdmissionForm /></AppLayout>} />
       <Route path="/admission-status" element={<AppLayout><AdmissionStatus /></AppLayout>} />
       
-      {/* Login Route (only for non-authenticated users) */}
+      {/* Authentication Routes (only for non-authenticated users) */}
       <Route 
         path="/login" 
         element={
@@ -103,182 +111,125 @@ const AppRoutes = () => {
           </PublicRoute>
         } 
       />
+      <Route 
+        path="/forgot-password" 
+        element={
+          <PublicRoute>
+            <ForgotPassword />
+          </PublicRoute>
+        } 
+      />
+      <Route 
+        path="/verify-otp" 
+        element={
+          <PublicRoute>
+            <OTPVerification />
+          </PublicRoute>
+        } 
+      />
+      <Route 
+        path="/reset-password" 
+        element={
+          <PublicRoute>
+            <ResetPassword />
+          </PublicRoute>
+        } 
+      />
 
       {/* Student Routes - Using StudentLayout */}
       <Route 
-        path="/student/dashboard" 
+        path="/student/*" 
         element={
           <ProtectedRoute requiredRole="student">
-            <StudentDashboard />
+            <StudentLayout />
           </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/student/profile" 
-        element={
-          <ProtectedRoute requiredRole="student">
-            <StudentLayout>
-              <StudentProfile />
-            </StudentLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/student/id-card" 
-        element={
-          <ProtectedRoute requiredRole="student">
-            <StudentLayout>
-              <StudentIdCard />
-            </StudentLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/student/settings" 
-        element={
-          <ProtectedRoute requiredRole="student">
-            <StudentLayout>
-              <AccountSettings />
-            </StudentLayout>
-          </ProtectedRoute>
-        } 
-      />
+        }
+      >
+        <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="profile" element={<StudentProfile />} />
+        <Route path="id-card" element={<StudentIdCard />} />
+        <Route path="settings" element={<Settings />} />
+        
+        {/* Additional student routes for sidebar navigation */}
+        <Route 
+          path="courses" 
+          element={
+            <div className="text-center py-20">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Courses</h1>
+              <p className="text-gray-600">Course management features coming soon!</p>
+            </div>
+          } 
+        />
+        <Route 
+          path="library" 
+          element={
+            <div className="text-center py-20">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Library</h1>
+              <p className="text-gray-600">Library management features coming soon!</p>
+            </div>
+          } 
+        />
+        <Route 
+          path="exams" 
+          element={
+            <div className="text-center py-20">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Exams</h1>
+              <p className="text-gray-600">Exam management features coming soon!</p>
+            </div>
+          } 
+        />
+        <Route 
+          path="notifications" 
+          element={
+            <div className="text-center py-20">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Notifications</h1>
+              <p className="text-gray-600">Notification center coming soon!</p>
+            </div>
+          } 
+        />
+        <Route 
+          path="help" 
+          element={
+            <div className="text-center py-20">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Help & Support</h1>
+              <p className="text-gray-600">Support features coming soon!</p>
+            </div>
+          } 
+        />
+        
+        {/* Default redirect to dashboard */}
+        <Route index element={<Navigate to="dashboard" replace />} />
+      </Route>
 
-      {/* Additional Student Routes for the new sidebar navigation */}
-      <Route 
-        path="/student/courses" 
-        element={
-          <ProtectedRoute requiredRole="student">
-            <StudentLayout>
-              <div className="text-center py-20">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Courses</h1>
-                <p className="text-gray-600">Course management features coming soon!</p>
-              </div>
-            </StudentLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/student/library" 
-        element={
-          <ProtectedRoute requiredRole="student">
-            <StudentLayout>
-              <div className="text-center py-20">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Library</h1>
-                <p className="text-gray-600">Library management features coming soon!</p>
-              </div>
-            </StudentLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/student/exams" 
-        element={
-          <ProtectedRoute requiredRole="student">
-            <StudentLayout>
-              <div className="text-center py-20">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Exams</h1>
-                <p className="text-gray-600">Exam management features coming soon!</p>
-              </div>
-            </StudentLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/student/help" 
-        element={
-          <ProtectedRoute requiredRole="student">
-            <StudentLayout>
-              <div className="text-center py-20">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Help & Support</h1>
-                <p className="text-gray-600">Support features coming soon!</p>
-              </div>
-            </StudentLayout>
-          </ProtectedRoute>
-        } 
-      />
 
-      {/* Admin Routes */}
+
+      {/* Admin Routes - Using AdminLayout */}
       <Route 
-        path="/admin/dashboard" 
+        path="/admin/*" 
         element={
           <ProtectedRoute requiredRole="admin">
-            <AppLayout><AdminDashboard /></AppLayout>
+            <AdminLayout />
           </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/admissions" 
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout><AdminAdmissions /></AppLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/students" 
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout><AdminStudents /></AppLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/contacts" 
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout><AdminContacts /></AppLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/courses" 
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout><AdminCourses /></AppLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/library" 
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout><AdminLibrary /></AppLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/exams" 
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout><AdminExams /></AppLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/help" 
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout><AdminHelp /></AppLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/gallery" 
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout><AdminGallery /></AppLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/analytics" 
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout><Analytics /></AppLayout>
-          </ProtectedRoute>
-        } 
-      />
+        }
+      >
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="admissions" element={<AdminAdmissions />} />
+        <Route path="students" element={<AdminStudents />} />
+        <Route path="contacts" element={<AdminContacts />} />
+        <Route path="courses" element={<AdminCourses />} />
+        <Route path="library" element={<AdminLibrary />} />
+        <Route path="exams" element={<AdminExams />} />
+        <Route path="help" element={<AdminHelp />} />
+        <Route path="gallery" element={<AdminGallery />} />
+        <Route path="analytics" element={<Analytics />} />
+        
+        {/* Additional admin routes */}
+        <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="settings" element={<AdminSettings />} />
+        
+        {/* Default redirect to dashboard */}
+        <Route index element={<Navigate to="dashboard" replace />} />
+      </Route>
 
       {/* Catch all route - redirect to appropriate dashboard */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -291,9 +242,11 @@ const App = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
+        <NotificationProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

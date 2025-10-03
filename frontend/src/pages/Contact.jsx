@@ -10,6 +10,7 @@ import {
   GlobeAltIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
+import Footer from '../components/Footer';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -27,25 +28,25 @@ const Contact = () => {
       icon: PhoneIcon,
       title: 'Phone Number',
       details: ['+91 9591 593 227'],
-      color: 'from-primary-500 to-primary-600'
+      color: 'bg-blue-600'
     },
     {
       icon: EnvelopeIcon,
       title: 'Email Address',
       details: ['contactsanket1@gmail.com'],
-      color: 'from-secondary-500 to-secondary-600'
+      color: 'bg-green-600'
     },
     {
       icon: MapPinIcon,
       title: 'Head Office',
       details: ['NES Road, Magadi Town', 'Karnataka – 562120'],
-      color: 'from-orange-500 to-orange-600'
+      color: 'bg-purple-600'
     },
     {
       icon: BuildingOfficeIcon,
       title: 'Bengaluru Office',
       details: ['11/3, Sunkadakatte, Magadi Main Road', 'Bangalore – 560091'],
-      color: 'from-purple-500 to-purple-600'
+      color: 'bg-indigo-600'
     }
   ];
 
@@ -82,16 +83,15 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Hero Section */}
-      <section className="hero relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-600/90 to-secondary-600/90"></div>
-        <div className="container relative z-10 text-center">
-          <div className="max-w-4xl mx-auto animate-fade-in">
-            <ChatBubbleBottomCenterTextIcon className="w-16 h-16 text-white mx-auto mb-6" />
+        {/* Hero Section */}
+        <section className="bg-slate-900 text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="max-w-4xl mx-auto">
+            <ChatBubbleBottomCenterTextIcon className="w-16 h-16 text-blue-400 mx-auto mb-6" />
             <h1 className="text-5xl lg:text-6xl font-bold text-white mb-6">
               Contact Us
             </h1>
-            <p className="text-xl text-white/90 mb-8 leading-relaxed">
+            <p className="text-xl text-slate-200 mb-8 leading-relaxed">
               Get in touch with us for any inquiries, admissions guidance, or program information. 
               We're here to help you start your distance learning journey.
             </p>
@@ -99,13 +99,13 @@ const Contact = () => {
         </div>
       </section>
 
-      <div className="container py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Contact Form */}
           <div className="space-y-8">
             <div className="text-center lg:text-left">
-              <h2 className="text-3xl font-bold text-neutral-900 mb-4">Send us a Message</h2>
-              <p className="text-neutral-600 text-lg leading-relaxed">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Send us a Message</h2>
+              <p className="text-slate-600 text-lg leading-relaxed">
                 Fill out the form below and we'll get back to you as soon as possible to discuss 
                 your distance learning options and program requirements.
               </p>
@@ -315,6 +315,7 @@ const Contact = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

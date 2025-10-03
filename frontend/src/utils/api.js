@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3002/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -30,10 +30,19 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Token expired or invalid - only redirect if not already on login page
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Use timeout to prevent immediate redirect loops
+        setTimeout(() => {
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+        }, 100);
+      }
     }
     
     // Return standardized error format
@@ -77,6 +86,16 @@ export const admissionAPI = {
   
   // Get admission status by email
   getStatus: (email) => api.get(`/admission/status/${email}`),
+  
+  // Get full admission application by email (for editing)
+  getApplication: (email) => api.get(`/admission/application/${email}`),
+  
+  // Update admission application
+  updateApplication: (email, formData) => api.put(`/admission/update/${email}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
   
   // Get admission statistics
   getStats: () => api.get('/admission/stats'),
@@ -122,6 +141,16 @@ export const adminAPI = {
   
   // Delete admission
   deleteAdmission: (id) => api.delete(`/admin/admissions/${id}`),
+  
+  // Gallery methods
+  getGalleryImages: (params) => api.get('/gallery/admin', { params }),
+  uploadGalleryImages: (formData) => api.post('/gallery/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  updateGalleryImage: (id, data) => api.put(`/gallery/${id}`, data),
+  deleteGalleryImage: (id) => api.delete(`/gallery/${id}`),
+  deleteGalleryImages: (imageIds) => api.delete('/gallery/bulk', { data: { imageIds } }),
+  getGalleryStats: () => api.get('/gallery/admin/stats'),
 };
 
 // Student API
@@ -190,6 +219,27 @@ export const publicAPI = {
   
   // Admin: Update contact status
   updateContactStatus: (id, data) => api.patch(`/public/admin/contacts/${id}/status`, data),
+};
+
+// Notification API
+export const notificationAPI = {
+  // Get all notifications
+  getNotifications: (params = {}) => api.get('/notifications', { params }),
+  
+  // Get unread notification count
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  
+  // Mark notification as read
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  
+  // Mark all notifications as read
+  markAllAsRead: () => api.patch('/notifications/mark-all-read'),
+  
+  // Delete notification
+  deleteNotification: (id) => api.delete(`/notifications/${id}`),
+  
+  // Create notification (admin only)
+  createNotification: (data) => api.post('/notifications', data),
 };
 
 export default api;

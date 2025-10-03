@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import Sidebar from '../../components/student/Sidebar';
-import TopNavbar from '../../components/student/TopNavbar';
+import { Outlet } from 'react-router-dom';
+import StudentTopNavbar from './TopNavbar';
+import StudentSidebar from './Sidebar';
 
-const StudentLayout = ({ children }) => {
+const StudentLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);
@@ -14,30 +15,29 @@ const StudentLayout = ({ children }) => {
     setSidebarOpen(false);
   };
 
-  const handleSidebarCollapse = (collapsed) => {
-    setIsCollapsed(collapsed);
+  const handleSidebarCollapse = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onToggle={handleSidebarToggle}
+    <div className="min-h-screen bg-gray-50 flex">
+      <StudentSidebar
+        isOpen={sidebarOpen}
         onClose={handleSidebarClose}
-        onCollapse={handleSidebarCollapse}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={handleSidebarCollapse}
       />
       
-      {/* Main Content Area */}
-      <div className={`min-h-screen flex flex-col transition-all duration-300 ${
-        isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
-      }`}>
-        {/* Top Navbar */}
-        <TopNavbar onSidebarToggle={handleSidebarToggle} />
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-h-screen">
+        <StudentTopNavbar 
+          onSidebarToggle={handleSidebarToggle} 
+          onSidebarCollapse={handleSidebarCollapse}
+          isCollapsed={sidebarCollapsed}
+        />
         
-        {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-colors">
-          {children}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+          <Outlet />
         </main>
       </div>
     </div>

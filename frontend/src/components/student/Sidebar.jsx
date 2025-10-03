@@ -1,202 +1,145 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  BookOpenIcon,
-  BuildingLibraryIcon,
-  DocumentTextIcon,
-  QuestionMarkCircleIcon,
   HomeIcon,
   UserIcon,
-  CogIcon,
   IdentificationIcon,
-  XMarkIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
+  Cog6ToothIcon,
+  BookOpenIcon,
+  BuildingLibraryIcon,
+  AcademicCapIcon,
+  QuestionMarkCircleIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
-const Sidebar = ({ isOpen, onToggle, onClose, onCollapse }) => {
+const StudentSidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
+  const { user } = useAuth();
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const menuItems = [
-    {
-      name: 'Dashboard',
-      icon: HomeIcon,
-      href: '/student/dashboard',
-      color: 'text-blue-600 bg-blue-50',
-    },
-    {
-      name: 'Courses',
-      icon: BookOpenIcon,
-      href: '/student/courses',
-      color: 'text-blue-600 bg-blue-50',
-    },
-    {
-      name: 'Library',
-      icon: BuildingLibraryIcon,
-      href: '/student/library',
-      color: 'text-emerald-600 bg-emerald-50',
-    },
-    {
-      name: 'Exams',
-      icon: DocumentTextIcon,
-      href: '/student/exams',
-      color: 'text-purple-600 bg-purple-50',
-    },
-    {
-      name: 'Profile',
-      icon: UserIcon,
-      href: '/student/profile',
-      color: 'text-indigo-600 bg-indigo-50',
-    },
-    {
-      name: 'ID Card',
-      icon: IdentificationIcon,
-      href: '/student/id-card',
-      color: 'text-orange-600 bg-orange-50',
-    },
-    {
-      name: 'Settings',
-      icon: CogIcon,
-      href: '/student/settings',
-      color: 'text-gray-600 bg-gray-50',
-    },
-    {
-      name: 'Help',
-      icon: QuestionMarkCircleIcon,
-      href: '/student/help',
-      color: 'text-green-600 bg-green-50',
-    },
+  const navigation = [
+    { name: 'Dashboard', href: '/student/dashboard', icon: HomeIcon },
+    { name: 'My Profile', href: '/student/profile', icon: UserIcon },
+    { name: 'ID Card', href: '/student/id-card', icon: IdentificationIcon },
+    { name: 'Courses', href: '/student/courses', icon: BookOpenIcon },
+    { name: 'Library', href: '/student/library', icon: BuildingLibraryIcon },
+    { name: 'Exams', href: '/student/exams', icon: AcademicCapIcon },
+    { name: 'Help', href: '/student/help', icon: QuestionMarkCircleIcon },
+    { name: 'Settings', href: '/student/settings', icon: Cog6ToothIcon },
   ];
 
-  const handleToggleCollapse = () => {
-    const newCollapsedState = !isCollapsed;
-    setIsCollapsed(newCollapsedState);
-    if (onCollapse) {
-      onCollapse(newCollapsedState);
-    }
-  };
+  const isActive = (path) => location.pathname === path;
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile overlay */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={onClose} />
       )}
 
       {/* Sidebar */}
-      <aside
-        className={`
-          fixed top-0 left-0 h-full bg-white dark:bg-gray-900 shadow-2xl border-r border-gray-200 dark:border-gray-700 z-50 transition-all duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          ${isCollapsed ? 'w-20' : 'w-72'}
-          lg:translate-x-0 lg:z-30
-        `}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:relative lg:transform-none ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${isCollapsed ? 'w-16' : 'w-64'} flex-shrink-0`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          {!isCollapsed && (
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                <img 
-                  src="/jnana-siri-logo.png" 
-                  alt="Jnana Siri Educational Institute" 
-                  className="w-10 h-10 object-contain"
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className={`flex items-center p-4 border-b border-gray-200 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+            {!isCollapsed && (
+              <div className="flex items-center space-x-3">
+                <img
+                  src="/jnana-siri-logo.png"
+                  alt="Jnana Siri"
+                  className="w-8 h-8"
                 />
+                <span className="text-lg font-semibold text-gray-900">
+                  Student Portal
+                </span>
               </div>
-              <div className="flex flex-col justify-center">
-                <h2 className="text-lg font-extrabold text-gray-900 dark:text-white leading-tight tracking-wide">Jnana Siri</h2>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 leading-tight tracking-wider uppercase">Learning Portal</p>
-              </div>
-            </div>
-          )}
-          
-          <div className="flex items-center space-x-2">
-            {/* Collapse Toggle (Desktop) */}
-            <button
-              onClick={handleToggleCollapse}
-              className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              {isCollapsed ? (
-                <ChevronRightIcon className="w-4 h-4 text-gray-600" />
-              ) : (
-                <ChevronLeftIcon className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
+            )}
             
-            {/* Close Button (Mobile) */}
+            {isCollapsed && (
+              <img
+                src="/jnana-siri-logo.png"
+                alt="Jnana Siri"
+                className="w-8 h-8"
+              />
+            )}
+            
             <button
               onClick={onClose}
-              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-1 rounded-md text-gray-400 hover:text-gray-600 lg:hidden"
             >
-              <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <XMarkIcon className="w-6 h-6" />
             </button>
           </div>
-        </div>
 
-        {/* Navigation */}
-        <nav className="p-4 space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.href;
-            
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={onClose}
-                className={`
-                  group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 hover:scale-105
-                  ${isActive 
-                    ? 'bg-gradient-to-r from-blue-600 to-emerald-600 text-white shadow-lg' 
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                  }
-                  ${isCollapsed ? 'justify-center' : ''}
-                `}
-              >
-                <Icon 
-                  className={`
-                    w-6 h-6 flex-shrink-0 transition-colors
-                    ${isActive ? 'text-white' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-600'}
-                  `} 
+          {/* User Info */}
+          <div className="p-4 border-b border-gray-200">
+            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
+              {user?.photo?.url ? (
+                <img
+                  src={user.photo.url}
+                  alt={user.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                  title={isCollapsed ? user?.name : ''}
                 />
-                {!isCollapsed && (
-                  <span className={`font-medium ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                    {item.name}
+              ) : (
+                <div 
+                  className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center"
+                  title={isCollapsed ? user?.name : ''}
+                >
+                  <span className="text-white font-medium">
+                    {user?.name?.charAt(0)?.toUpperCase() || 'S'}
                   </span>
-                )}
-                
-                {/* Active Indicator */}
-                {isActive && !isCollapsed && (
-                  <div className="ml-auto w-2 h-2 bg-white rounded-full" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Bottom Section */}
-        {!isCollapsed && (
-          <div className="absolute bottom-4 left-4 right-4">
-            <div className="bg-gradient-to-br from-blue-50 to-emerald-50 p-4 rounded-xl border border-blue-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-emerald-600 rounded-lg flex items-center justify-center">
-                  <QuestionMarkCircleIcon className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Need Help?</p>
-                  <p className="text-xs text-gray-600">Get support instantly</p>
+              )}
+              {!isCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.name || 'Student'}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    ID: {user?.student_id || 'N/A'}
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-        )}
-      </aside>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  onClick={onClose}
+                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                    active
+                      ? 'bg-blue-100 text-blue-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title={isCollapsed ? item.name : ''}
+                >
+                  <Icon
+                    className={`flex-shrink-0 w-6 h-6 ${
+                      active ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+                    } ${isCollapsed ? '' : 'mr-3'}`}
+                  />
+                  {!isCollapsed && item.name}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
     </>
   );
 };
 
-export default Sidebar;
+export default StudentSidebar;

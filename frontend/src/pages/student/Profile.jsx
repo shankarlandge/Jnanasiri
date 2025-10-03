@@ -1,41 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import StudentLayout from '../../components/student/StudentLayout';
 import { studentAPI } from '../../utils/api';
 import {
-  UserCircleIcon,
+  UserIcon,
   CameraIcon,
   PencilIcon,
-  CheckIcon,
-  XMarkIcon,
-  EnvelopeIcon,
   PhoneIcon,
-  IdentificationIcon,
-  CalendarDaysIcon,
+  MapPinIcon,
   AcademicCapIcon,
-  HomeIcon,
-  UserIcon,
-  HeartIcon
+  CalendarIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationCircleIcon,
+  EnvelopeIcon,
+  IdentificationIcon,
+  HeartIcon,
+  HomeIcon
 } from '@heroicons/react/24/outline';
 
 const StudentProfile = () => {
-  const { user, setUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
     mobile: '',
+    dateOfBirth: '',
+    gender: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
     bloodGroup: '',
     standard: '',
-    dateOfBirth: '',
-    address: '',
+    section: '',
+    rollNumber: '',
     emergencyContact: {
       name: '',
       relationship: '',
-      phone: ''
+      phone: '',
+      email: ''
     }
   });
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -43,28 +59,70 @@ const StudentProfile = () => {
         name: user.name || '',
         email: user.email || '',
         mobile: user.mobile || '',
+        dateOfBirth: user.dateOfBirth || '',
+        gender: user.gender || '',
+        address: user.address || '',
+        city: user.city || '',
+        state: user.state || '',
+        pincode: user.pincode || '',
         bloodGroup: user.bloodGroup || '',
         standard: user.standard || '',
-        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
-        address: user.address || '',
-        emergencyContact: user.emergencyContact || {
-          name: '',
-          relationship: '',
-          phone: ''
+        section: user.section || '',
+        rollNumber: user.rollNumber || '',
+        emergencyContact: {
+          name: user.emergencyContact?.name || '',
+          relationship: user.emergencyContact?.relationship || '',
+          phone: user.emergencyContact?.phone || '',
+          email: user.emergencyContact?.email || ''
         }
       });
     }
   }, [user]);
 
-  const handleInputChange = (e, field) => {
+  const fetchProfileData = async () => {
+    try {
+      setLoading(true);
+      const response = await studentAPI.getProfile();
+      const data = response.data;
+      if (data) {
+        setProfileData({
+          name: data.name || '',
+          email: data.email || '',
+          mobile: data.mobile || '',
+          dateOfBirth: data.dateOfBirth || '',
+          gender: data.gender || '',
+          address: data.address || '',
+          city: data.city || '',
+          state: data.state || '',
+          pincode: data.pincode || '',
+          bloodGroup: data.bloodGroup || '',
+          standard: data.standard || '',
+          section: data.section || '',
+          rollNumber: data.rollNumber || '',
+          emergencyContact: {
+            name: data.emergencyContact?.name || '',
+            relationship: data.emergencyContact?.relationship || '',
+            phone: data.emergencyContact?.phone || '',
+            email: data.emergencyContact?.email || ''
+          }
+        });
+      }
+    } catch (error) {
+      showMessage('Failed to load profile data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
-    if (field === 'emergencyContact') {
+    if (name.includes('emergencyContact.')) {
+      const field = name.split('.')[1];
       setProfileData(prev => ({
         ...prev,
         emergencyContact: {
           ...prev.emergencyContact,
-          [name]: value
+          [field]: value
         }
       }));
     } else {
@@ -75,365 +133,513 @@ const StudentProfile = () => {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      setLoading(true);
-      const response = await studentAPI.updateProfile(profileData);
-      setUser(response.data.user);
-      setEditing(false);
-      alert('Profile updated successfully!');
-    } catch (error) {
-      alert(error.message || 'Failed to update profile');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    // Reset to original user data
-    if (user) {
-      setProfileData({
-        name: user.name || '',
-        email: user.email || '',
-        mobile: user.mobile || '',
-        bloodGroup: user.bloodGroup || '',
-        standard: user.standard || '',
-        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
-        address: user.address || '',
-        emergencyContact: user.emergencyContact || {
-          name: '',
-          relationship: '',
-          phone: ''
-        }
-      });
-    }
-    setEditing(false);
-  };
-
-  const handlePhotoUpload = async (e) => {
+  const handlePhotoChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showMessage('File size must be less than 5MB', 'error');
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        showMessage('Please select a valid image file', 'error');
+        return;
+      }
 
-    const formData = new FormData();
-    formData.append('photo', file);
-
-    try {
-      setLoading(true);
-      const response = await studentAPI.uploadPhoto(formData);
-      setUser(prev => ({ ...prev, photo: response.data.photo }));
-      alert('Profile photo updated successfully!');
-    } catch (error) {
-      alert(error.message || 'Failed to upload photo');
-    } finally {
-      setLoading(false);
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
+
+  const handleSaveProfile = async () => {
+    try {
+      setSaving(true);
+      
+      const response = await studentAPI.updateProfile(profileData);
+      
+      if (photoFile) {
+        const formData = new FormData();
+        formData.append('photo', photoFile);
+        await studentAPI.uploadPhoto(formData);
+      }
+
+      if (updateUser) {
+        updateUser(response.data);
+      }
+      showMessage('Profile updated successfully!', 'success');
+      setIsEditing(false);
+      setPhotoFile(null);
+      setPhotoPreview(null);
+    } catch (error) {
+      showMessage(error.response?.data?.message || 'Failed to update profile', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const showMessage = (text, type) => {
+    setMessage(text);
+    setMessageType(type);
+    setTimeout(() => {
+      setMessage('');
+      setMessageType('');
+    }, 5000);
+  };
+
+  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  const genders = ['Male', 'Female', 'Other'];
+  const relationships = ['Father', 'Mother', 'Guardian', 'Spouse', 'Sibling', 'Other'];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center space-x-3 mb-2">
-                <UserCircleIcon className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-                <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">My Profile</h1>
-              </div>
-              <p className="text-neutral-600 dark:text-gray-400">Manage your personal information and academic details</p>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              {editing ? (
-                <>
-                  <button
-                    onClick={handleCancel}
-                    className="btn btn-secondary"
-                    disabled={loading}
-                  >
-                    <XMarkIcon className="w-5 h-5 mr-2" />
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    className="btn btn-primary"
-                    disabled={loading}
-                  >
-                    <CheckIcon className="w-5 h-5 mr-2" />
-                    {loading ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </>
-              ) : (
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">My Profile</h1>
+            <p className="text-blue-100 mt-1 sm:mt-2 text-sm sm:text-base">Manage your personal information and settings</p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {isEditing ? (
+              <>
                 <button
-                  onClick={() => setEditing(true)}
-                  className="btn btn-primary"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setPhotoFile(null);
+                    setPhotoPreview(null);
+                    fetchProfileData();
+                  }}
+                  className="px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all"
                 >
-                  <PencilIcon className="w-5 h-5 mr-2" />
-                  Edit Profile
+                  Cancel
                 </button>
-              )}
-            </div>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="px-6 py-3 bg-white text-blue-600 rounded-xl hover:bg-gray-100 disabled:opacity-50 flex items-center font-medium"
+                >
+                  {saving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircleIcon className="w-5 h-5 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-6 py-3 bg-white text-blue-600 rounded-xl hover:bg-gray-100 flex items-center font-medium"
+              >
+                <PencilIcon className="w-5 h-5 mr-2" />
+                Edit Profile
+              </button>
+            )}
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Picture and Basic Info */}
-          <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-gray-700 text-center">
-              <div className="relative inline-block mb-4">
-                <div className="w-32 h-32 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto">
-                  {user?.photo?.url ? (
-                    <img
-                      src={user.photo.url}
-                      alt={user?.name}
-                      className="w-32 h-32 rounded-full object-cover"
-                    />
-                  ) : (
-                    <UserIcon className="w-16 h-16 text-primary-600 dark:text-primary-400" />
-                  )}
-                </div>
+      {/* Message */}
+      {message && (
+        <div className={`p-4 rounded-xl flex items-center ${
+          messageType === 'success' ? 'bg-green-50 text-green-700 border border-green-200' :
+          messageType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
+          'bg-blue-50 text-blue-700 border border-blue-200'
+        }`}>
+          {messageType === 'success' ? (
+            <CheckCircleIcon className="w-5 h-5 mr-3" />
+          ) : messageType === 'error' ? (
+            <XCircleIcon className="w-5 h-5 mr-3" />
+          ) : (
+            <ExclamationCircleIcon className="w-5 h-5 mr-3" />
+          )}
+          {message}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Profile Photo & Basic Info */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-2xl shadow-sm border p-6 sticky top-8">
+            <div className="text-center">
+              <div className="relative inline-block">
+                {photoPreview || user?.photo?.url ? (
+                  <img
+                    src={photoPreview || user.photo.url}
+                    alt={user?.name}
+                    className="w-32 h-32 rounded-full object-cover border-4 border-gray-100 shadow-lg"
+                  />
+                ) : (
+                  <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                    <UserIcon className="w-16 h-16 text-white" />
+                  </div>
+                )}
                 
-                {editing && (
-                  <label className="absolute bottom-0 right-0 bg-primary-600 text-white p-2 rounded-full cursor-pointer hover:bg-primary-700 transition-colors">
-                    <CameraIcon className="w-4 h-4" />
+                {isEditing && (
+                  <label className="absolute bottom-2 right-2 bg-blue-600 text-white p-3 rounded-full cursor-pointer hover:bg-blue-700 shadow-lg transition-colors">
+                    <CameraIcon className="w-5 h-5" />
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handlePhotoUpload}
+                      onChange={handlePhotoChange}
                       className="hidden"
                     />
                   </label>
                 )}
               </div>
               
-              <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">{user?.name}</h2>
-              <p className="text-neutral-600 dark:text-gray-400 mb-1">Student ID: {user?.student_id}</p>
-              <p className="text-neutral-600 dark:text-gray-400">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  user?.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                }`}>
-                  {user?.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </p>
+              <div className="mt-6">
+                <h3 className="text-xl font-bold text-gray-900">{user?.name}</h3>
+                <p className="text-gray-600 font-medium">Student ID: {user?.student_id}</p>
+                <p className="text-sm text-gray-500 mt-1">{user?.email}</p>
+              </div>
+
+              {isEditing && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-700 font-medium">
+                    Upload Photo Guidelines
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    • Maximum size: 5MB<br/>
+                    • Formats: JPG, PNG<br/>
+                    • Recommended: Square images
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Form */}
+        <div className="lg:col-span-3 space-y-8">
+          {/* Personal Information */}
+          <div className="bg-white rounded-2xl shadow-sm border">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <UserIcon className="w-6 h-6 mr-3 text-blue-500" />
+                Personal Information
+              </h2>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={profileData.name}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      name="email"
+                      value={profileData.email}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                      placeholder="Enter your email"
+                    />
+                    <EnvelopeIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Mobile Number</label>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      name="mobile"
+                      value={profileData.mobile}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                      placeholder="Enter mobile number"
+                    />
+                    <PhoneIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      name="dateOfBirth"
+                      value={profileData.dateOfBirth}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                    />
+                    <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
+                  <select
+                    name="gender"
+                    value={profileData.gender}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                  >
+                    <option value="">Select Gender</option>
+                    {genders.map(gender => (
+                      <option key={gender} value={gender}>{gender}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Blood Group</label>
+                  <div className="relative">
+                    <select
+                      name="bloodGroup"
+                      value={profileData.bloodGroup}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                    >
+                      <option value="">Select Blood Group</option>
+                      {bloodGroups.map(group => (
+                        <option key={group} value={group}>{group}</option>
+                      ))}
+                    </select>
+                    <HeartIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Profile Details */}
-          <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700">
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-6">Personal Information</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-gray-300 mb-2">
-                      <UserIcon className="w-4 h-4 inline mr-1" />
-                      Full Name
-                    </label>
-                    {editing ? (
-                      <input
-                        type="text"
-                        name="name"
-                        value={profileData.name}
-                        onChange={handleInputChange}
-                        className="input-field"
-                        placeholder="Enter your full name"
-                      />
-                    ) : (
-                      <p className="text-neutral-900 dark:text-white py-2">{user?.name || 'Not provided'}</p>
-                    )}
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-gray-300 mb-2">
-                      <EnvelopeIcon className="w-4 h-4 inline mr-1" />
-                      Email Address
-                    </label>
-                    <p className="text-neutral-900 dark:text-white py-2">{user?.email}</p>
-                    <p className="text-xs text-neutral-500">Email cannot be changed</p>
-                  </div>
-
-                  {/* Mobile */}
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-gray-300 mb-2">
-                      <PhoneIcon className="w-4 h-4 inline mr-1" />
-                      Mobile Number
-                    </label>
-                    {editing ? (
-                      <input
-                        type="tel"
-                        name="mobile"
-                        value={profileData.mobile}
-                        onChange={handleInputChange}
-                        className="input-field"
-                        placeholder="Enter your mobile number"
-                      />
-                    ) : (
-                      <p className="text-neutral-900 dark:text-white py-2">{user?.mobile || 'Not provided'}</p>
-                    )}
-                  </div>
-
-                  {/* Blood Group */}
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-gray-300 mb-2">
-                      <HeartIcon className="w-4 h-4 inline mr-1" />
-                      Blood Group
-                    </label>
-                    {editing ? (
-                      <select
-                        name="bloodGroup"
-                        value={profileData.bloodGroup}
-                        onChange={handleInputChange}
-                        className="input-field"
-                      >
-                        <option value="">Select Blood Group</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                      </select>
-                    ) : (
-                      <p className="text-neutral-900 dark:text-white py-2">{user?.bloodGroup || 'Not provided'}</p>
-                    )}
-                  </div>
-
-                  {/* Standard */}
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-gray-300 mb-2">
-                      <AcademicCapIcon className="w-4 h-4 inline mr-1" />
-                      Standard/Class
-                    </label>
-                    {editing ? (
-                      <input
-                        type="text"
-                        name="standard"
-                        value={profileData.standard}
-                        onChange={handleInputChange}
-                        className="input-field"
-                        placeholder="Enter your standard/class"
-                      />
-                    ) : (
-                      <p className="text-neutral-900 dark:text-white py-2">{user?.standard || 'Not provided'}</p>
-                    )}
-                  </div>
-
-                  {/* Date of Birth */}
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-gray-300 mb-2">
-                      <CalendarDaysIcon className="w-4 h-4 inline mr-1" />
-                      Date of Birth
-                    </label>
-                    {editing ? (
-                      <input
-                        type="date"
-                        name="dateOfBirth"
-                        value={profileData.dateOfBirth}
-                        onChange={handleInputChange}
-                        className="input-field"
-                      />
-                    ) : (
-                      <p className="text-neutral-900 dark:text-white py-2">
-                        {user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : 'Not provided'}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Address */}
-                <div className="mt-6">
-                  <label className="block text-sm font-medium text-neutral-700 dark:text-gray-300 mb-2">
-                    <HomeIcon className="w-4 h-4 inline mr-1" />
-                    Address
-                  </label>
-                  {editing ? (
-                    <textarea
-                      name="address"
-                      value={profileData.address}
-                      onChange={handleInputChange}
-                      rows="3"
-                      className="input-field"
-                      placeholder="Enter your full address"
-                    />
-                  ) : (
-                    <p className="text-neutral-900 dark:text-white py-2">{user?.address || 'Not provided'}</p>
-                  )}
+          {/* Address Information */}
+          <div className="bg-white rounded-2xl shadow-sm border">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <HomeIcon className="w-6 h-6 mr-3 text-blue-500" />
+                Address Information
+              </h2>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Address</label>
+                <div className="relative">
+                  <textarea
+                    name="address"
+                    value={profileData.address}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    rows={3}
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors resize-none"
+                    placeholder="Enter complete address"
+                  />
+                  <MapPinIcon className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
                 </div>
               </div>
-
-              {/* Emergency Contact */}
-              <div className="border-t border-neutral-200 dark:border-gray-700 p-6">
-                <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-6">Emergency Contact</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={profileData.city}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                    placeholder="Enter city"
+                  />
+                </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-gray-300 mb-2">
-                      Contact Name
-                    </label>
-                    {editing ? (
-                      <input
-                        type="text"
-                        name="name"
-                        value={profileData.emergencyContact.name}
-                        onChange={(e) => handleInputChange(e, 'emergencyContact')}
-                        className="input-field"
-                        placeholder="Emergency contact name"
-                      />
-                    ) : (
-                      <p className="text-neutral-900 py-2">
-                        {user?.emergencyContact?.name || 'Not provided'}
-                      </p>
-                    )}
-                  </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">State</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={profileData.state}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                    placeholder="Enter state"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Pincode</label>
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={profileData.pincode}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                    placeholder="Enter pincode"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Relationship
-                    </label>
-                    {editing ? (
-                      <input
-                        type="text"
-                        name="relationship"
-                        value={profileData.emergencyContact.relationship}
-                        onChange={(e) => handleInputChange(e, 'emergencyContact')}
-                        className="input-field"
-                        placeholder="Relationship (e.g., Parent, Guardian)"
-                      />
-                    ) : (
-                      <p className="text-neutral-900 py-2">
-                        {user?.emergencyContact?.relationship || 'Not provided'}
-                      </p>
-                    )}
+          {/* Academic Information */}
+          <div className="bg-white rounded-2xl shadow-sm border">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <AcademicCapIcon className="w-6 h-6 mr-3 text-blue-500" />
+                Academic Information
+              </h2>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Standard/Class</label>
+                  <input
+                    type="text"
+                    name="standard"
+                    value={profileData.standard}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                    placeholder="Enter class/standard"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Section</label>
+                  <input
+                    type="text"
+                    name="section"
+                    value={profileData.section}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                    placeholder="Enter section"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Roll Number</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="rollNumber"
+                      value={profileData.rollNumber}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                      placeholder="Enter roll number"
+                    />
+                    <IdentificationIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Phone Number
-                    </label>
-                    {editing ? (
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={profileData.emergencyContact.phone}
-                        onChange={(e) => handleInputChange(e, 'emergencyContact')}
-                        className="input-field"
-                        placeholder="Emergency contact phone"
-                      />
-                    ) : (
-                      <p className="text-neutral-900 py-2">
-                        {user?.emergencyContact?.phone || 'Not provided'}
-                      </p>
-                    )}
+          {/* Emergency Contact */}
+          <div className="bg-white rounded-2xl shadow-sm border">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <PhoneIcon className="w-6 h-6 mr-3 text-blue-500" />
+                Emergency Contact
+              </h2>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Name</label>
+                  <input
+                    type="text"
+                    name="emergencyContact.name"
+                    value={profileData.emergencyContact.name}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                    placeholder="Enter contact name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Relationship</label>
+                  <select
+                    name="emergencyContact.relationship"
+                    value={profileData.emergencyContact.relationship}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                  >
+                    <option value="">Select Relationship</option>
+                    {relationships.map(rel => (
+                      <option key={rel} value={rel}>{rel}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      name="emergencyContact.phone"
+                      value={profileData.emergencyContact.phone}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                      placeholder="Enter phone number"
+                    />
+                    <PhoneIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email (Optional)</label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      name="emergencyContact.email"
+                      value={profileData.emergencyContact.email}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
+                      placeholder="Enter email address"
+                    />
+                    <EnvelopeIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
     </div>
   );
 };

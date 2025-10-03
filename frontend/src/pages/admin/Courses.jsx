@@ -21,20 +21,24 @@ const AdminCourses = () => {
     <div className="min-h-screen bg-neutral-50">
       <div className="container py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div className="mb-4 sm:mb-0">
-              <h1 className="text-3xl font-bold text-neutral-900 flex items-center">
-                <BookOpenIcon className="w-8 h-8 mr-3 text-primary-600" />
-                Course Management
-              </h1>
-              <p className="text-neutral-600 mt-2">
-                Create, edit, and organize courses and curriculum
-              </p>
+        <div className="card p-6 mb-8 bg-gradient-to-r from-primary-50 to-secondary-50 border-0">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl shadow-lg">
+                <BookOpenIcon className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                  Course Management
+                </h1>
+                <p className="text-neutral-600">
+                  Create, edit, and organize courses and curriculum
+                </p>
+              </div>
             </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="btn btn-primary flex items-center space-x-2"
+              className="btn btn-primary flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600"
             >
               <PlusIcon className="w-5 h-5" />
               <span>Add New Course</span>

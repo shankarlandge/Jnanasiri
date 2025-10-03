@@ -1,0 +1,19 @@
+# Use Node.js LTS Alpine for smaller image size
+FROM node:18-alpine AS base
+
+# Backend Stage
+FROM base AS backend
+WORKDIR /app/backend
+
+# Copy backend package files
+COPY backend/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy backend source code
+COPY backend/ ./
+
+# Expose backend port
+EXPOSE 3002
+
+# Start backend
+CMD ["npm", "start"]

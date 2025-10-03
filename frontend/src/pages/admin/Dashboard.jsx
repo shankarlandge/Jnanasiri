@@ -11,10 +11,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  ArrowTrendingUpIcon,
   ArrowRightIcon,
   AcademicCapIcon,
-  ShieldCheckIcon,
   BookOpenIcon,
   BuildingLibraryIcon,
   DocumentTextIcon,
@@ -47,44 +45,50 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch admissions data
-      const admissionsResponse = await adminAPI.getAdmissions({ limit: 5 });
+      // Fetch dashboard statistics from dedicated API
+      const statsResponse = await adminAPI.getDashboardStats();
+      const dashboardStats = statsResponse.data;
+      
+      // Fetch recent data for activity sections
+      const [admissionsResponse, studentsResponse, contactsResponse] = await Promise.all([
+        adminAPI.getAdmissions({ limit: 5 }),
+        adminAPI.getStudents({ limit: 5 }),
+        publicAPI.getContacts({ limit: 5 })
+      ]);
+      
       const admissions = admissionsResponse.data.admissions || [];
-      
-      // Fetch students data
-      const studentsResponse = await adminAPI.getStudents({ limit: 5 });
-      const students = studentsResponse.data.students || [];
-      
-      // Fetch contacts data
-      const contactsResponse = await publicAPI.getContacts({ limit: 5 });
+      const students = studentsResponse.data.students || [];  
       const contacts = contactsResponse.data.contacts || [];
 
       // Fetch gallery data
-      const galleryResponse = await fetch('/api/gallery');
-      const galleryData = await galleryResponse.json();
-      const galleryImages = galleryData.success ? galleryData.data.images : [];
+      let galleryImages = [];
+      try {
+        const galleryResponse = await publicAPI.getGallery();
+        galleryImages = galleryResponse.data?.images || [];
+      } catch (galleryError) {
+        console.error('Error fetching gallery:', galleryError);
+      }
 
-      // Calculate statistics
-      const pendingAdmissions = admissions.filter(a => a.status === 'pending').length;
-      const approvedAdmissions = admissions.filter(a => a.status === 'approved').length;
-
-      // TODO: Add API calls for new features when backend is ready
-      // const coursesResponse = await adminAPI.getCourses();
-      // const booksResponse = await adminAPI.getBooks();
-      // const examsResponse = await adminAPI.getExams();
-      // const ticketsResponse = await adminAPI.getSupportTickets();
-      // const galleryResponse = await adminAPI.getGalleryImages();
-
+      // Use API statistics instead of calculating from limited results
+      console.log('Dashboard stats received:', dashboardStats);
+      
       setStats({
-        totalStudents: students.length,
-        pendingAdmissions: pendingAdmissions,
-        totalContacts: contacts.length,
-        approvedAdmissions: approvedAdmissions,
-        totalCourses: 0, // TODO: Replace with coursesResponse.data.courses.length
-        totalBooks: 0, // TODO: Replace with booksResponse.data.books.length
-        totalExams: 0, // TODO: Replace with examsResponse.data.exams.length
-        totalTickets: 0, // TODO: Replace with ticketsResponse.data.tickets.length
-        totalGalleryImages: galleryImages.length
+        totalStudents: dashboardStats.stats.totalStudents || 0,
+        pendingAdmissions: dashboardStats.stats.pendingAdmissions || 0,
+        totalContacts: dashboardStats.stats.totalContacts || 0,
+        approvedAdmissions: dashboardStats.stats.approvedThisMonth || 0,
+        totalCourses: dashboardStats.stats.totalCourses || 0,
+        totalBooks: dashboardStats.stats.totalBooks || 0,
+        totalExams: dashboardStats.stats.totalExams || 0,
+        totalTickets: dashboardStats.stats.totalTickets || 0,
+        totalGalleryImages: galleryImages.length,
+        managementCenters: dashboardStats.stats.managementCenters || 0
+      });
+      
+      console.log('Stats set:', {
+        totalStudents: dashboardStats.stats.totalStudents,
+        pendingAdmissions: dashboardStats.stats.pendingAdmissions,
+        totalContacts: dashboardStats.stats.totalContacts
       });
 
       setRecentAdmissions(admissions);
@@ -117,8 +121,8 @@ const AdminDashboard = () => {
       description: 'Review and process admission applications with detailed student information',
       icon: ClipboardDocumentListIcon,
       link: '/admin/admissions',
-      color: 'from-primary-500 to-primary-600',
-      bgColor: 'bg-primary-50',
+      color: 'from-orange-500 to-orange-600',
+      bgColor: 'bg-orange-50',
       count: stats.pendingAdmissions,
       label: 'Pending Reviews'
     },
@@ -127,8 +131,8 @@ const AdminDashboard = () => {
       description: 'View, edit, and manage all registered students and their academic records',
       icon: UserGroupIcon,
       link: '/admin/students',
-      color: 'from-secondary-500 to-secondary-600',
-      bgColor: 'bg-secondary-50',
+      color: 'from-red-500 to-red-600',
+      bgColor: 'bg-red-50',
       count: stats.totalStudents,
       label: 'Total Students'
     },
@@ -137,8 +141,8 @@ const AdminDashboard = () => {
       description: 'Create, edit, and organize courses, curriculum, and learning materials',
       icon: BookOpenIcon,
       link: '/admin/courses',
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'from-orange-400 to-orange-500',
+      bgColor: 'bg-orange-50',
       count: stats.totalCourses || 0,
       label: 'Available Courses'
     },
@@ -147,8 +151,8 @@ const AdminDashboard = () => {
       description: 'Manage books, resources, and digital library content for students',
       icon: BuildingLibraryIcon,
       link: '/admin/library',
-      color: 'from-emerald-500 to-emerald-600',
-      bgColor: 'bg-emerald-50',
+      color: 'from-red-400 to-red-500',
+      bgColor: 'bg-red-50',
       count: stats.totalBooks || 0,
       label: 'Library Books'
     },
@@ -157,8 +161,8 @@ const AdminDashboard = () => {
       description: 'Schedule exams, manage questions, and oversee student assessments',
       icon: DocumentTextIcon,
       link: '/admin/exams',
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50',
+      color: 'from-orange-500 to-red-500',
+      bgColor: 'bg-gradient-to-r from-orange-50 to-red-50',
       count: stats.totalExams || 0,
       label: 'Active Exams'
     },
@@ -167,8 +171,8 @@ const AdminDashboard = () => {
       description: 'Manage help documentation, FAQs, and provide student support',
       icon: QuestionMarkCircleIcon,
       link: '/admin/help',
-      color: 'from-indigo-500 to-indigo-600',
-      bgColor: 'bg-indigo-50',
+      color: 'from-red-500 to-orange-500',
+      bgColor: 'bg-gradient-to-r from-red-50 to-orange-50',
       count: stats.totalTickets || 0,
       label: 'Support Tickets'
     },
@@ -177,8 +181,8 @@ const AdminDashboard = () => {
       description: 'Upload, organize, and manage website gallery images and media',
       icon: PhotoIcon,
       link: '/admin/gallery',
-      color: 'from-rose-500 to-rose-600',
-      bgColor: 'bg-rose-50',
+      color: 'from-orange-600 to-red-600',
+      bgColor: 'bg-gradient-to-r from-orange-50 to-red-50',
       count: stats.totalGalleryImages || 0,
       label: 'Gallery Images'
     },
@@ -284,44 +288,10 @@ const AdminDashboard = () => {
     );
   }
 
+
+
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="container py-8">
-        {/* Admin Header */}
-        <div className="mb-12">
-          <div className="card p-8 bg-gradient-to-br from-primary-600 to-secondary-600 text-white relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                    <ShieldCheckIcon className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-                      Admin Dashboard
-                    </h1>
-                    <p className="text-white/90 text-lg">
-                      Welcome back, {user?.name || user?.email || 'Administrator'}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">{new Date().toLocaleDateString()}</div>
-                  <div className="text-white/90">System Status: Active</div>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-2 text-white/90">
-                <ArrowTrendingUpIcon className="w-5 h-5" />
-                <span>System performance optimal • All services running smoothly</span>
-              </div>
-            </div>
-            
-            {/* Background Decorations */}
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-secondary-300/20 rounded-full blur-3xl"></div>
-          </div>
-        </div>
+    <div className="space-y-6">
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -421,7 +391,6 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };

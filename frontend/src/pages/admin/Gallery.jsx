@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { adminAPI } from '../../utils/api';
 import {
   PhotoIcon,
   PlusIcon,
@@ -55,23 +56,18 @@ const AdminGallery = () => {
   const fetchGalleryImages = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/gallery/admin', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+      const response = await adminAPI.getGalleryImages();
+      setGalleryImages(response.data.images || []);
+      setStats(response.data.stats || {
+        totalImages: 0,
+        activeImages: 0,
+        inactiveImages: 0,
+        categoryStats: [],
+        storageUsed: 0
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch gallery images');
-      }
-
-      const data = await response.json();
-      setGalleryImages(data.data.images);
-      setStats(data.data.stats);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching gallery:', err);
+      setError(err.message || 'Failed to fetch gallery images');
     } finally {
       setLoading(false);
     }
@@ -85,89 +81,45 @@ const AdminGallery = () => {
       });
       formData.append('imageDetails', JSON.stringify(imageDetails));
 
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/gallery/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to upload images');
-      }
-
-      const data = await response.json();
+      const response = await adminAPI.uploadGalleryImages(formData);
       await fetchGalleryImages(); // Refresh the gallery
-      return data;
+      return response.data;
     } catch (err) {
-      throw new Error(err.message);
+      console.error('Upload error:', err);
+      throw new Error(err.response?.data?.message || err.message || 'Failed to upload images');
     }
   };
 
   const updateImageAPI = async (imageId, updateData) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/gallery/${imageId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updateData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update image');
-      }
-
+      const response = await adminAPI.updateGalleryImage(imageId, updateData);
       await fetchGalleryImages(); // Refresh the gallery
+      return response.data;
     } catch (err) {
-      throw new Error(err.message);
+      console.error('Update error:', err);
+      throw new Error(err.response?.data?.message || err.message || 'Failed to update image');
     }
   };
 
   const deleteImageAPI = async (imageId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/gallery/${imageId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete image');
-      }
-
+      const response = await adminAPI.deleteGalleryImage(imageId);
       await fetchGalleryImages(); // Refresh the gallery
+      return response.data;
     } catch (err) {
-      throw new Error(err.message);
+      console.error('Delete error:', err);
+      throw new Error(err.response?.data?.message || err.message || 'Failed to delete image');
     }
   };
 
   const bulkDeleteImagesAPI = async (imageIds) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/gallery/bulk', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ imageIds })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete images');
-      }
-
+      const response = await adminAPI.deleteGalleryImages(imageIds);
       await fetchGalleryImages(); // Refresh the gallery
+      return response.data;
     } catch (err) {
-      throw new Error(err.message);
+      console.error('Bulk delete error:', err);
+      throw new Error(err.response?.data?.message || err.message || 'Failed to delete images');
     }
   };
 

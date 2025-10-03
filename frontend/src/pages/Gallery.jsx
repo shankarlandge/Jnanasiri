@@ -7,6 +7,7 @@ import {
   EyeIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import Footer from '../components/Footer';
 
 const Gallery = () => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -68,15 +69,14 @@ const Gallery = () => {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Hero Section */}
-      <section className="hero relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-600/90 to-secondary-600/90"></div>
-        <div className="container relative z-10 text-center">
-          <div className="max-w-4xl mx-auto animate-fade-in">
-            <PhotoIcon className="w-16 h-16 text-white mx-auto mb-6" />
+      <section className="bg-slate-900 text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="max-w-4xl mx-auto">
+            <PhotoIcon className="w-16 h-16 text-blue-400 mx-auto mb-6" />
             <h1 className="text-5xl lg:text-6xl font-bold text-white mb-6">
               Campus Gallery
             </h1>
-            <p className="text-xl text-white/90 mb-8 leading-relaxed">
+            <p className="text-xl text-slate-200 mb-8 leading-relaxed">
               Explore our beautiful campus, modern facilities, and vibrant student life 
               through our comprehensive photo gallery
             </p>
@@ -97,15 +97,15 @@ const Gallery = () => {
 
         {/* Category Filter */}
         <div className="text-center mb-12">
-          <div className="inline-flex bg-white rounded-2xl p-2 shadow-soft">
+          <div className="inline-flex bg-white rounded-2xl p-2 border border-slate-200 shadow-sm">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
                 className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 capitalize ${
                   selectedCategory === category
-                    ? 'bg-primary-600 text-white shadow-soft'
-                    : 'text-neutral-600 hover:text-primary-600 hover:bg-neutral-50'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'
                 }`}
               >
                 {category}
@@ -117,15 +117,15 @@ const Gallery = () => {
         {/* Loading State */}
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : (
           <>
             {/* No Images Message */}
             {galleryImages.length === 0 ? (
               <div className="text-center py-12">
-                <PhotoIcon className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
-                <p className="text-neutral-600 text-lg">No images found in the gallery</p>
+                <PhotoIcon className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-600 text-lg">No images found in the gallery</p>
               </div>
             ) : (
               /* Gallery Grid */
@@ -241,6 +241,7 @@ const Gallery = () => {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 };

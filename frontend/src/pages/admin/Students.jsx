@@ -204,7 +204,7 @@ const AdminStudents = () => {
         <div className="card p-6 mb-8 bg-gradient-to-r from-primary-50 to-secondary-50 border-0">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-lg">
+              <div className="p-3 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl shadow-lg">
                 <UserGroupIcon className="h-8 w-8 text-white" />
               </div>
               <div>
@@ -342,25 +342,25 @@ const AdminStudents = () => {
                 <table className="min-w-full divide-y divide-neutral-200">
                   <thead className="bg-gradient-to-r from-neutral-50 to-neutral-100">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
                         Student Details
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
                         Student ID
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
                         Course & Level
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
                         Contact Info
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
                         Enrollment Date
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-neutral-700 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -368,53 +368,53 @@ const AdminStudents = () => {
                   <tbody className="bg-white divide-y divide-neutral-100">
                     {students.map((student, index) => (
                       <tr key={student._id} className="hover:bg-gradient-to-r hover:from-primary-25 hover:to-secondary-25 transition-all duration-200">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-12 w-12">
-                              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center shadow-md">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center min-w-0">
+                            <div className="flex-shrink-0 h-10 w-10 mr-3">
+                              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center shadow-md">
                                 {student.profilePhoto ? (
                                   <img
-                                    className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-md"
+                                    className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-md"
                                     src={student.profilePhoto}
                                     alt={student.name}
                                   />
                                 ) : (
-                                  <UserIcon className="h-7 w-7 text-primary-600" />
+                                  <UserIcon className="h-5 w-5 text-primary-600" />
                                 )}
                               </div>
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-semibold text-neutral-900">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-semibold text-neutral-900 truncate">
                                 {student.firstName && student.lastName ? `${student.firstName} ${student.lastName}` : student.name || 'Unknown Student'}
                               </div>
-                              <div className="text-sm text-neutral-600 flex items-center">
-                                <EnvelopeIcon className="h-3 w-3 mr-1" />
-                                {student.email || 'No email provided'}
+                              <div className="text-xs text-neutral-600 flex items-center truncate">
+                                <EnvelopeIcon className="h-3 w-3 mr-1 flex-shrink-0" />
+                                <span className="truncate">{student.email || 'No email'}</span>
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-secondary-100 to-secondary-200 text-secondary-800 shadow-sm">
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-secondary-100 to-secondary-200 text-secondary-800 shadow-sm">
                             {student.student_id || student.studentId || `STD${String(index + 1).padStart(3, '0')}`}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-3">
                           <div className="flex items-center">
-                            <div className="p-1 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-md mr-3">
-                              <AcademicCapIcon className="h-4 w-4 text-emerald-600" />
+                            <div className="p-1 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-md mr-2">
+                              <AcademicCapIcon className="h-3 w-3 text-emerald-600" />
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-neutral-900">{student.standard || 'Not specified'}</div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-neutral-900 truncate">{student.standard || 'Not specified'}</div>
                               <div className="text-xs text-neutral-500">Academic Level</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-3">
                           <div className="text-sm text-neutral-900 font-medium">{student.mobile || 'Not provided'}</div>
                           <div className="text-xs text-neutral-500">Primary Contact</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-3">
                           <div className="text-sm text-neutral-900">
                             {student.createdAt ? new Date(student.createdAt).toLocaleDateString('en-US', {
                               year: 'numeric',
@@ -424,8 +424,8 @@ const AdminStudents = () => {
                           </div>
                           <div className="text-xs text-neutral-500">Enrollment</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium shadow-sm ${
                             student.isActive 
                               ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800' 
                               : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800'
@@ -436,28 +436,28 @@ const AdminStudents = () => {
                             {student.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end space-x-2">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end space-x-1">
                             <button
                               onClick={() => handleViewDetails(student._id)}
-                              className="btn-outline btn-sm group"
+                              className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                               title="View Details"
                             >
-                              <EyeIcon className="w-4 h-4 group-hover:text-primary-600 transition-colors" />
+                              <EyeIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => openEditModal(student)}
-                              className="btn-secondary btn-sm group"
+                              className="p-2 text-neutral-600 hover:text-secondary-600 hover:bg-secondary-50 rounded-lg transition-colors"
                               title="Edit Student"
                             >
-                              <PencilIcon className="w-4 h-4 group-hover:text-secondary-600 transition-colors" />
+                              <PencilIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteStudent(student._id, student.name || `${student.firstName} ${student.lastName}`)}
-                              className="btn-error btn-sm group"
+                              className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Delete Student"
                             >
-                              <TrashIcon className="w-4 h-4 group-hover:text-red-600 transition-colors" />
+                              <TrashIcon className="w-4 h-4" />
                             </button>
                           </div>
                         </td>
