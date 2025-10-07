@@ -20,8 +20,17 @@ export const NotificationProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await notificationAPI.getNotifications();
-      if (response.success) {
-        setNotifications(response.data.notifications || []);
+      // Handle different response structures
+      if (response.data) {
+        if (response.data.notifications) {
+          setNotifications(response.data.notifications);
+        } else if (Array.isArray(response.data)) {
+          setNotifications(response.data);
+        } else {
+          setNotifications([]);
+        }
+      } else {
+        setNotifications([]);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -65,12 +74,11 @@ export const NotificationProvider = ({ children }) => {
 
   const markAsRead = async (id) => {
     try {
-      const response = await notificationAPI.markAsRead(id);
-      if (response.success) {
-        setNotifications(prev => prev.map(notif => 
-          notif._id === id ? { ...notif, read: true } : notif
-        ));
-      }
+      await notificationAPI.markAsRead(id);
+      // Update local state regardless of response structure
+      setNotifications(prev => prev.map(notif => 
+        notif._id === id ? { ...notif, read: true } : notif
+      ));
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -78,10 +86,9 @@ export const NotificationProvider = ({ children }) => {
 
   const markAllAsRead = async () => {
     try {
-      const response = await notificationAPI.markAllAsRead();
-      if (response.success) {
-        setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-      }
+      await notificationAPI.markAllAsRead();
+      // Update local state regardless of response structure
+      setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
@@ -89,10 +96,9 @@ export const NotificationProvider = ({ children }) => {
 
   const deleteNotification = async (id) => {
     try {
-      const response = await notificationAPI.deleteNotification(id);
-      if (response.success) {
-        setNotifications(prev => prev.filter(notif => notif._id !== id));
-      }
+      await notificationAPI.deleteNotification(id);
+      // Update local state regardless of response structure
+      setNotifications(prev => prev.filter(notif => notif._id !== id));
     } catch (error) {
       console.error('Error deleting notification:', error);
     }

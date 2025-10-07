@@ -622,4 +622,43 @@ router.delete('/admissions/:id', authenticate, adminOnly, async (req, res) => {
   }
 });
 
+// ========== SETTINGS ROUTES ==========
+
+// Get system settings
+router.get('/settings', authenticate, adminOnly, async (req, res) => {
+  try {
+    const Settings = (await import('../models/Settings.js')).default;
+    const settings = await Settings.getSettings();
+    
+    sendSuccess(res, { settings }, 'Settings retrieved successfully');
+  } catch (error) {
+    console.error('Get settings error:', error);
+    sendError(res, 'Failed to retrieve settings', 500);
+  }
+});
+
+// Update system settings
+router.put('/settings', authenticate, adminOnly, async (req, res) => {
+  try {
+    const Settings = (await import('../models/Settings.js')).default;
+    const updateData = req.body;
+    
+    // Validate required fields if provided
+    if (updateData.adminEmail && !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(updateData.adminEmail)) {
+      return sendError(res, 'Please provide a valid admin email address', 400);
+    }
+    
+    const settings = await Settings.updateSettings(updateData, req.user.id);
+    
+    sendSuccess(res, { settings }, 'Settings updated successfully');
+  } catch (error) {
+    console.error('Update settings error:', error);
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return sendError(res, messages.join(', '), 400);
+    }
+    sendError(res, 'Failed to update settings', 500);
+  }
+});
+
 export default router;

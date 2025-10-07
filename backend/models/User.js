@@ -34,7 +34,16 @@ const userSchema = new mongoose.Schema({
   mobile: {
     type: String,
     required: function() { return this.role === 'student'; },
-    match: [/^\d{10}$/, 'Please enter a valid 10-digit mobile number']
+    validate: {
+      validator: function(v) {
+        // Allow empty for non-students, or valid mobile formats for all users
+        if (!v) return this.role !== 'student';
+        // Clean the number and check if it's 10-15 digits
+        const cleaned = v.replace(/[\s\-\(\)\+]/g, '');
+        return /^\d{10,15}$/.test(cleaned);
+      },
+      message: 'Please enter a valid mobile number (10-15 digits)'
+    }
   },
   bloodGroup: {
     type: String,

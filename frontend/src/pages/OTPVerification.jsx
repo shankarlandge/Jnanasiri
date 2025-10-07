@@ -112,7 +112,7 @@ const OTPVerification = () => {
           state: {
             email,
             userType,
-            resetToken: response.resetToken
+            resetToken: response.data.resetToken
           }
         });
       }

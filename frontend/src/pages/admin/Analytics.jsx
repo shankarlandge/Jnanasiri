@@ -29,6 +29,7 @@ const Analytics = () => {
     recentActivity: []
   });
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [timeRange, setTimeRange] = useState('30d');
 
   useEffect(() => {
@@ -59,7 +60,7 @@ const Analytics = () => {
       const recentGallery = gallery.filter(g => new Date(g.createdAt) > thirtyDaysAgo);
 
       // Calculate trends
-      const admissionsTrend = calculateTrend(admissions, 'createdAt');
+      const admissionsTrend = calculateTrend(admissions, 'submittedAt');
       const contactsTrend = calculateTrend(contacts, 'createdAt');
 
       // Top categories from gallery
@@ -138,6 +139,94 @@ const Analytics = () => {
     return last7Days;
   };
 
+  const exportToCSV = async () => {
+    try {
+      setExporting(true);
+      
+      // Generate report data
+      const reportData = {
+        generatedAt: new Date().toISOString(),
+        timeRange: timeRange,
+        overview: analyticsData.overview,
+        admissionsTrend: analyticsData.admissionsTrend,
+        contactsTrend: analyticsData.contactsTrend,
+        topCategories: analyticsData.topCategories,
+        recentActivity: analyticsData.recentActivity
+      };
+
+      // Create CSV content
+      let csvContent = "Janashiri LMS Analytics Report\n";
+      csvContent += `Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n`;
+      csvContent += `Time Range: ${timeRange}\n\n`;
+
+      // Overview Section
+      csvContent += "OVERVIEW STATISTICS\n";
+      csvContent += "Metric,Value\n";
+      csvContent += `Total Students,${analyticsData.overview.totalUsers}\n`;
+      csvContent += `Total Admissions,${analyticsData.overview.totalAdmissions}\n`;
+      csvContent += `Contact Inquiries,${analyticsData.overview.totalContacts}\n`;
+      csvContent += `Gallery Images,${analyticsData.overview.totalGalleryImages}\n`;
+      csvContent += `Monthly Growth,${analyticsData.overview.monthlyGrowth}%\n`;
+      csvContent += `Active Users,${analyticsData.overview.activeUsers}\n\n`;
+
+      // Admissions Trend Section
+      csvContent += "ADMISSIONS TREND (Last 7 Days)\n";
+      csvContent += "Date,Admissions Count\n";
+      analyticsData.admissionsTrend.forEach(day => {
+        csvContent += `${day.date},${day.count}\n`;
+      });
+      csvContent += "\n";
+
+      // Contacts Trend Section
+      csvContent += "CONTACTS TREND (Last 7 Days)\n";
+      csvContent += "Date,Contacts Count\n";
+      analyticsData.contactsTrend.forEach(day => {
+        csvContent += `${day.date},${day.count}\n`;
+      });
+      csvContent += "\n";
+
+      // Top Categories Section
+      csvContent += "TOP GALLERY CATEGORIES\n";
+      csvContent += "Category,Image Count\n";
+      analyticsData.topCategories.forEach(category => {
+        csvContent += `${category.category},${category.count}\n`;
+      });
+      csvContent += "\n";
+
+      // Recent Activity Section
+      csvContent += "RECENT ACTIVITY\n";
+      csvContent += "Type,Title,Date,Time,Status\n";
+      analyticsData.recentActivity.forEach(activity => {
+        const date = activity.time.toLocaleDateString();
+        const time = activity.time.toLocaleTimeString();
+        csvContent += `${activity.type},"${activity.title}",${date},${time},${activity.status}\n`;
+      });
+
+      // Create and download CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      
+      const filename = `janashiri_analytics_report_${new Date().toISOString().split('T')[0]}_${timeRange}.csv`;
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Show success message
+      alert(`Analytics report exported successfully! \nFile: ${filename}\nLocation: Downloads folder`);
+
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      alert('Failed to export report. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
@@ -176,9 +265,24 @@ const Analytics = () => {
                 <option value="90d">Last 90 days</option>
                 <option value="1y">Last year</option>
               </select>
-              <button className="btn-primary flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 shadow-lg">
-                <DocumentChartBarIcon className="w-4 h-4" />
-                <span>Export Report</span>
+              <button 
+                onClick={exportToCSV}
+                disabled={exporting || loading}
+                className={`btn-primary flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 shadow-lg ${
+                  exporting || loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {exporting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Exporting...</span>
+                  </>
+                ) : (
+                  <>
+                    <DocumentChartBarIcon className="w-4 h-4" />
+                    <span>Export Report</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -242,7 +346,7 @@ const Analytics = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Admissions Trend */}
           <div className="card p-6 hover:shadow-lg transition-all duration-300">
             <div className="flex items-center space-x-3 mb-6">
@@ -263,6 +367,35 @@ const Analytics = () => {
                       <div 
                         className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full shadow-sm transition-all duration-500" 
                         style={{ width: `${Math.min((day.count / Math.max(...analyticsData.admissionsTrend.map(d => d.count), 1)) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-bold text-neutral-900 w-8 text-right">{day.count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Contacts Trend */}
+          <div className="card p-6 hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg">
+                <PhoneIcon className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900">Contacts Trend</h3>
+                <p className="text-sm text-neutral-600">Last 7 days inquiries</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {analyticsData.contactsTrend.map((day, index) => (
+                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-neutral-50 to-neutral-100 hover:from-emerald-50 hover:to-emerald-100 transition-all duration-200">
+                  <span className="text-sm font-medium text-neutral-700">{day.date}</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-24 bg-neutral-200 rounded-full h-3 shadow-inner">
+                      <div 
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full shadow-sm transition-all duration-500" 
+                        style={{ width: `${Math.min((day.count / Math.max(...analyticsData.contactsTrend.map(d => d.count), 1)) * 100, 100)}%` }}
                       ></div>
                     </div>
                     <span className="text-sm font-bold text-neutral-900 w-8 text-right">{day.count}</span>

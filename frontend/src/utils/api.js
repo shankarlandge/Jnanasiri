@@ -71,6 +71,9 @@ export const authAPI = {
   // Change password
   changePassword: (data) => api.put('/auth/change-password', data),
   
+  // Update profile
+  updateProfile: (data) => api.put('/auth/profile', data),
+  
   // Get auth stats (admin only)
   getAuthStats: () => api.get('/auth/stats'),
 };
@@ -224,22 +227,69 @@ export const publicAPI = {
 // Notification API
 export const notificationAPI = {
   // Get all notifications
-  getNotifications: (params = {}) => api.get('/notifications', { params }),
-  
-  // Get unread notification count
-  getUnreadCount: () => api.get('/notifications/unread-count'),
+  getNotifications: (page = 1, limit = 10) => 
+    api.get(`/notifications?page=${page}&limit=${limit}`),
   
   // Mark notification as read
-  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAsRead: (id) => 
+    api.patch(`/notifications/${id}/read`),
   
   // Mark all notifications as read
-  markAllAsRead: () => api.patch('/notifications/mark-all-read'),
+  markAllAsRead: () => 
+    api.patch('/notifications/mark-all-read'),
   
   // Delete notification
-  deleteNotification: (id) => api.delete(`/notifications/${id}`),
+  deleteNotification: (id) => 
+    api.delete(`/notifications/${id}`),
   
-  // Create notification (admin only)
-  createNotification: (data) => api.post('/notifications', data),
+  // Get unread count
+  getUnreadCount: () => 
+    api.get('/notifications/unread-count')
+};
+
+export const ticketAPI = {
+  // Get all tickets (Admin only)
+  getAllTickets: (params = {}) => 
+    api.get('/tickets', { params }),
+  
+  // Get tickets for current user
+  getMyTickets: (params = {}) => 
+    api.get('/tickets/my-tickets', { params }),
+  
+  // Get single ticket
+  getTicket: (id) => 
+    api.get(`/tickets/${id}`),
+  
+  // Create new ticket
+  createTicket: (ticketData) => 
+    api.post('/tickets', ticketData),
+  
+  // Update ticket status (Admin only)
+  updateTicketStatus: (id, status) => 
+    api.patch(`/tickets/${id}/status`, { status }),
+  
+  // Add response to ticket
+  addResponse: (id, message) => 
+    api.post(`/tickets/${id}/responses`, { message }),
+  
+  // Assign ticket (Admin only)
+  assignTicket: (id, assignedTo) => 
+    api.patch(`/tickets/${id}/assign`, { assignedTo }),
+  
+  // Get ticket statistics (Admin only)
+  getTicketStats: () => 
+    api.get('/tickets/stats/summary')
+};
+
+// Settings API
+export const settingsAPI = {
+  // Get system settings (Admin only)
+  getSettings: () => 
+    api.get('/admin/settings'),
+  
+  // Update system settings (Admin only)
+  updateSettings: (settingsData) => 
+    api.put('/admin/settings', settingsData)
 };
 
 export default api;

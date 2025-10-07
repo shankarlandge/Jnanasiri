@@ -59,6 +59,8 @@ const AdminContacts = () => {
     } catch (error) {
       console.error('Error fetching contacts:', error);
       setContacts([]);
+      // Show user-friendly error message
+      alert('Failed to load contacts. Please check your internet connection and try again.');
     } finally {
       setLoading(false);
     }

@@ -13,6 +13,7 @@ import adminRoutes from './routes/admin.js';
 import publicRoutes from './routes/public.js';
 import galleryRoutes from './routes/gallery.js';
 import notificationRoutes from './routes/notifications.js';
+import ticketRoutes from './routes/tickets.js';
 
 dotenv.config();
 
@@ -123,6 +124,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/tickets', ticketRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

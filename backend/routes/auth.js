@@ -154,6 +154,87 @@ router.put('/change-password', authenticate, async (req, res) => {
   }
 });
 
+// Update profile (Admin/Student)
+router.put('/profile', authenticate, async (req, res) => {
+  try {
+    const { name, email, mobile } = req.body;
+    const userId = req.user._id;
+
+    // Validation
+    if (!name && !email && !mobile) {
+      return sendError(res, 'At least one field (name, email, mobile) is required', 400);
+    }
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return sendError(res, 'User not found', 404);
+    }
+
+    // Check if email is being changed and if it already exists
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+      if (existingUser) {
+        return sendError(res, 'Email address is already in use', 400);
+      }
+    }
+
+    // Validate email format
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return sendError(res, 'Please provide a valid email address', 400);
+      }
+    }
+
+    // Validate mobile format - allow various formats
+    if (mobile) {
+      const cleanedMobile = mobile.replace(/[\s\-\(\)\+]/g, '');
+      if (!/^\d{10,15}$/.test(cleanedMobile)) {
+        return sendError(res, 'Please provide a valid mobile number (10-15 digits)', 400);
+      }
+    }
+
+    // Update user data
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (email) updateData.email = email.trim().toLowerCase();
+    if (mobile) {
+      // Clean mobile number by removing all non-digit characters except + at start
+      const cleanedMobile = mobile.replace(/[\s\-\(\)]/g, '');
+      updateData.mobile = cleanedMobile;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return sendError(res, 'Failed to update profile', 500);
+    }
+
+    sendSuccess(res, { user: updatedUser }, 'Profile updated successfully');
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return sendError(res, messages.join(', '), 400);
+    }
+    
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      return sendError(res, 'Email address is already in use', 400);
+    }
+    
+    sendError(res, 'Failed to update profile', 500);
+  }
+});
+
 // Get authentication stats (admin only)
 router.get('/stats', authenticate, async (req, res) => {
   try {
@@ -196,9 +277,6 @@ router.post('/forgot-password', async (req, res) => {
     
     // Find user by email and role
     const user = await User.findOne({ email, role: userType }).select('+resetPasswordOTP +resetPasswordOTPExpires');
-    
-    // Temporary debug logging (remove in production)
-    console.log(`🔍 Password reset attempt: ${email} (${userType}) - User ${user ? 'found' : 'not found'}`);
     
     if (!user) {
       // Don't reveal if email exists - security best practice

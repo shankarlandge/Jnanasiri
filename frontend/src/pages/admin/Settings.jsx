@@ -19,18 +19,18 @@ import {
   EyeIcon,
   EyeSlashIcon
 } from '@heroicons/react/24/outline';
+import { authAPI, settingsAPI } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminSettings = () => {
+  const { user: authUser, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [settings, setSettings] = useState({
     profile: {
-      name: 'Administrator',
-      email: 'admin@janashiri.edu',
-      mobile: '+91-XXXXXXXXXX',
-      profilePhoto: null,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
+      name: '',
+      email: '',
+      mobile: '',
+      profilePhoto: null
     },
     general: {
       siteName: 'Jnana Siri LMS',
@@ -46,7 +46,10 @@ const AdminSettings = () => {
       enableTwoFactor: false,
       passwordExpiry: 90,
       maxLoginAttempts: 5,
-      sessionTimeout: 24
+      sessionTimeout: 24,
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
     },
     notifications: {
       emailNotifications: true,
@@ -67,6 +70,92 @@ const AdminSettings = () => {
 
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      type: 'admission',
+      title: 'New Admission Application',
+      message: 'John Doe has submitted a new admission application',
+      time: '2 minutes ago',
+      read: false
+    },
+    {
+      id: 2,
+      type: 'system',
+      title: 'System Backup Completed',
+      message: 'Daily system backup completed successfully',
+      time: '1 hour ago',
+      read: true
+    }
+  ]);
+
+  // Load current user data and settings on component mount
+  useEffect(() => {
+    if (authUser) {
+      setSettings(prev => ({
+        ...prev,
+        profile: {
+          ...prev.profile,
+          name: authUser.name || '',
+          email: authUser.email || '',
+          mobile: authUser.mobile || '',
+        }
+      }));
+    }
+  }, [authUser]);
+
+  // Load settings from backend
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!authUser) return; // Don't load settings if not authenticated
+      
+      try {
+        const response = await settingsAPI.getSettings();
+        if (response.success && response.data.settings) {
+          const backendSettings = response.data.settings;
+          setSettings(prev => ({
+            ...prev,
+            general: {
+              siteName: backendSettings.siteName || prev.general.siteName,
+              siteDescription: backendSettings.siteDescription || prev.general.siteDescription,
+              adminEmail: backendSettings.adminEmail || prev.general.adminEmail,
+              contactPhone: backendSettings.contactPhone || prev.general.contactPhone,
+              address: backendSettings.address || prev.general.address,
+              timeZone: backendSettings.timeZone || prev.general.timeZone,
+              language: backendSettings.language || prev.general.language
+            },
+            notifications: {
+              emailNotifications: backendSettings.emailNotifications !== undefined ? backendSettings.emailNotifications : prev.notifications.emailNotifications,
+              smsNotifications: backendSettings.smsNotifications !== undefined ? backendSettings.smsNotifications : prev.notifications.smsNotifications,
+              pushNotifications: backendSettings.pushNotifications !== undefined ? backendSettings.pushNotifications : prev.notifications.pushNotifications,
+              weeklyReports: backendSettings.weeklyReports !== undefined ? backendSettings.weeklyReports : prev.notifications.weeklyReports
+            },
+            security: {
+              ...prev.security,
+              requireEmailVerification: backendSettings.requireEmailVerification !== undefined ? backendSettings.requireEmailVerification : prev.security.requireEmailVerification,
+              enableTwoFactor: backendSettings.enableTwoFactor !== undefined ? backendSettings.enableTwoFactor : prev.security.enableTwoFactor,
+              passwordExpiry: backendSettings.passwordExpiry || prev.security.passwordExpiry,
+              maxLoginAttempts: backendSettings.maxLoginAttempts || prev.security.maxLoginAttempts,
+              sessionTimeout: backendSettings.sessionTimeout || prev.security.sessionTimeout
+            },
+            system: {
+              maintenanceMode: backendSettings.maintenanceMode !== undefined ? backendSettings.maintenanceMode : prev.system.maintenanceMode,
+              debugMode: backendSettings.debugMode !== undefined ? backendSettings.debugMode : prev.system.debugMode,
+              backupFrequency: backendSettings.backupFrequency || prev.system.backupFrequency,
+              logLevel: backendSettings.logLevel || prev.system.logLevel,
+              cacheEnabled: backendSettings.cacheEnabled !== undefined ? backendSettings.cacheEnabled : prev.system.cacheEnabled
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+        // Don't show error to user on initial load, use defaults
+      }
+    };
+
+    loadSettings();
+  }, [authUser]);
 
   const tabs = [
     { id: 'profile', name: 'Profile', icon: UserIcon },
@@ -84,17 +173,160 @@ const AdminSettings = () => {
         [key]: value
       }
     }));
+    
+    // Clear error when user starts typing
+    if (error) {
+      setError('');
+    }
   };
 
   const handleSave = async () => {
     setLoading(true);
+    setError('');
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Handle profile updates
+      if (activeTab === 'profile') {
+        const profileData = {
+          name: settings.profile.name,
+          email: settings.profile.email,
+          mobile: settings.profile.mobile,
+        };
+
+        // Only send fields that have values
+        const updateData = {};
+        if (profileData.name.trim()) updateData.name = profileData.name.trim();
+        if (profileData.email.trim()) updateData.email = profileData.email.trim();
+        if (profileData.mobile.trim()) updateData.mobile = profileData.mobile.trim();
+
+        if (Object.keys(updateData).length === 0) {
+          setError('Please fill in at least one field to update');
+          return;
+        }
+
+        const response = await authAPI.updateProfile(updateData);
+        
+        // Update the user context with new data
+        if (response.success && response.data.user && updateUser) {
+          updateUser(response.data.user);
+        }
+
+
+      }
+
+      // Handle general settings updates
+      if (activeTab === 'general') {
+        const generalData = {
+          siteName: settings.general.siteName,
+          siteDescription: settings.general.siteDescription,
+          adminEmail: settings.general.adminEmail,
+          contactPhone: settings.general.contactPhone,
+          address: settings.general.address,
+          timeZone: settings.general.timeZone,
+          language: settings.general.language
+        };
+
+        // Validate required fields
+        if (!generalData.siteName.trim()) {
+          setError('Site name is required');
+          return;
+        }
+        if (!generalData.adminEmail.trim()) {
+          setError('Admin email is required');
+          return;
+        }
+
+        await settingsAPI.updateSettings(generalData);
+      }
+
+      // Handle security updates (password change and security settings)
+      if (activeTab === 'security') {
+        // Handle password change if provided
+        if (settings.security.currentPassword && settings.security.newPassword) {
+          if (settings.security.newPassword !== settings.security.confirmPassword) {
+            setError('Passwords do not match');
+            return;
+          }
+
+          if (settings.security.newPassword.length < 6) {
+            setError('Password must be at least 6 characters long');
+            return;
+          }
+
+          await authAPI.changePassword({
+            currentPassword: settings.security.currentPassword,
+            newPassword: settings.security.newPassword
+          });
+
+          // Clear password fields after successful change
+          setSettings(prev => ({
+            ...prev,
+            security: {
+              ...prev.security,
+              currentPassword: '',
+              newPassword: '',
+              confirmPassword: ''
+            }
+          }));
+        }
+
+        // Always update security settings (password expiry, login attempts, session timeout)
+        const securitySettingsData = {
+          requireEmailVerification: settings.security.requireEmailVerification,
+          enableTwoFactor: settings.security.enableTwoFactor,
+          passwordExpiry: settings.security.passwordExpiry,
+          maxLoginAttempts: settings.security.maxLoginAttempts,
+          sessionTimeout: settings.security.sessionTimeout
+        };
+
+        // Validate security settings
+        if (securitySettingsData.passwordExpiry < 30 || securitySettingsData.passwordExpiry > 365) {
+          setError('Password expiry must be between 30 and 365 days');
+          return;
+        }
+        if (securitySettingsData.maxLoginAttempts < 3 || securitySettingsData.maxLoginAttempts > 10) {
+          setError('Max login attempts must be between 3 and 10');
+          return;
+        }
+        if (securitySettingsData.sessionTimeout < 1 || securitySettingsData.sessionTimeout > 168) {
+          setError('Session timeout must be between 1 and 168 hours');
+          return;
+        }
+
+        await settingsAPI.updateSettings(securitySettingsData);
+      }
+
+      // Handle notifications settings updates  
+      if (activeTab === 'notifications') {
+        const notificationsData = {
+          emailNotifications: settings.notifications.emailNotifications,
+          smsNotifications: settings.notifications.smsNotifications,
+          pushNotifications: settings.notifications.pushNotifications,
+          weeklyReports: settings.notifications.weeklyReports
+        };
+
+        await settingsAPI.updateSettings(notificationsData);
+      }
+
+      // Handle system settings updates
+      if (activeTab === 'system') {
+        const systemData = {
+          maintenanceMode: settings.system.maintenanceMode,
+          debugMode: settings.system.debugMode,
+          backupFrequency: settings.system.backupFrequency,
+          logLevel: settings.system.logLevel,
+          cacheEnabled: settings.system.cacheEnabled
+        };
+
+        await settingsAPI.updateSettings(systemData);
+      }
+
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
+
     } catch (error) {
       console.error('Error saving settings:', error);
+      setError(error.message || 'Failed to save settings. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -177,55 +409,7 @@ const AdminSettings = () => {
         </div>
       </div>
 
-      {/* Password Change Section */}
-      <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border">
-        <div className="flex items-center space-x-3 mb-6">
-          <KeyIcon className="w-6 h-6 text-blue-600" />
-          <div>
-            <h3 className="text-lg font-semibold text-neutral-900">Change Password</h3>
-            <p className="text-sm text-neutral-600">Update your login password for security</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div>
-            <label className="form-label">Current Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={settings.profile.currentPassword}
-              onChange={(e) => handleSettingChange('profile', 'currentPassword', e.target.value)}
-              placeholder="Enter current password"
-            />
-          </div>
-          <div>
-            <label className="form-label">New Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={settings.profile.newPassword}
-              onChange={(e) => handleSettingChange('profile', 'newPassword', e.target.value)}
-              placeholder="Enter new password"
-            />
-          </div>
-          <div>
-            <label className="form-label">Confirm Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={settings.profile.confirmPassword}
-              onChange={(e) => handleSettingChange('profile', 'confirmPassword', e.target.value)}
-              placeholder="Confirm new password"
-            />
-          </div>
-        </div>
-        {settings.profile.newPassword && settings.profile.confirmPassword && 
-         settings.profile.newPassword !== settings.profile.confirmPassword && (
-          <div className="mt-3 flex items-center space-x-2 text-red-600">
-            <ExclamationTriangleIcon className="w-4 h-4" />
-            <span className="text-sm">Passwords do not match</span>
-          </div>
-        )}
-      </div>
+
     </div>
   );
 
@@ -297,7 +481,64 @@ const AdminSettings = () => {
   );
 
   const renderSecuritySettings = () => (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Password Change Section */}
+      <div className="p-6 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border">
+        <div className="flex items-center space-x-3 mb-6">
+          <KeyIcon className="w-6 h-6 text-red-600" />
+          <div>
+            <h3 className="text-lg font-semibold text-neutral-900">Change Password</h3>
+            <p className="text-sm text-neutral-600">Update your account password for security</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div>
+            <label className="form-label">Current Password</label>
+            <input
+              type="password"
+              className="form-input"
+              value={settings.security.currentPassword || ''}
+              onChange={(e) => handleSettingChange('security', 'currentPassword', e.target.value)}
+              placeholder="Enter current password"
+            />
+          </div>
+          <div>
+            <label className="form-label">New Password</label>
+            <input
+              type="password"
+              className="form-input"
+              value={settings.security.newPassword || ''}
+              onChange={(e) => handleSettingChange('security', 'newPassword', e.target.value)}
+              placeholder="Enter new password"
+            />
+          </div>
+          <div>
+            <label className="form-label">Confirm Password</label>
+            <input
+              type="password"
+              className="form-input"
+              value={settings.security.confirmPassword || ''}
+              onChange={(e) => handleSettingChange('security', 'confirmPassword', e.target.value)}
+              placeholder="Confirm new password"
+            />
+          </div>
+        </div>
+        {settings.security.newPassword && settings.security.confirmPassword && 
+         settings.security.newPassword !== settings.security.confirmPassword && (
+          <div className="mt-3 flex items-center space-x-2 text-red-600">
+            <ExclamationTriangleIcon className="w-4 h-4" />
+            <span className="text-sm">Passwords do not match</span>
+          </div>
+        )}
+        {settings.security.newPassword && settings.security.newPassword.length < 6 && (
+          <div className="mt-3 flex items-center space-x-2 text-red-600">
+            <ExclamationTriangleIcon className="w-4 h-4" />
+            <span className="text-sm">Password must be at least 6 characters long</span>
+          </div>
+        )}
+      </div>
+
+      {/* System Security Settings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <label className="form-label">Password Expiry (days)</label>
@@ -643,6 +884,13 @@ const AdminSettings = () => {
               <span className="font-medium">Settings saved successfully!</span>
             </div>
           )}
+          
+          {error && (
+            <div className="flex items-center space-x-2 text-red-600">
+              <XCircleIcon className="w-5 h-5" />
+              <span className="font-medium">{error}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -691,6 +939,7 @@ const AdminSettings = () => {
                 onClick={handleSave}
                 disabled={loading}
                 className="btn-primary"
+                title={activeTab !== 'profile' && activeTab !== 'security' ? 'Only Profile and Security settings can be saved' : ''}
               >
                 {loading ? (
                   <>
@@ -707,7 +956,7 @@ const AdminSettings = () => {
       </div>
 
       {/* CSS for toggle switches */}
-      <style jsx>{`
+      <style>{`
         .switch {
           position: relative;
           display: inline-block;

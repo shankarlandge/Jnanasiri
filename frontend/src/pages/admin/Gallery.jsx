@@ -286,13 +286,13 @@ const AdminGallery = () => {
                   </button>
                   {selectedImages.length > 0 && (
                     <button
-                  onClick={handleBulkDelete}
-                  className="btn btn-danger flex items-center space-x-2"
-                >
-                  <TrashIcon className="w-5 h-5" />
-                  <span>Delete Selected ({selectedImages.length})</span>
-                </button>
-              )}
+                      onClick={handleBulkDelete}
+                      className="btn btn-error flex items-center space-x-2"
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                      <span>Delete Selected ({selectedImages.length})</span>
+                    </button>
+                  )}
             </div>
           </div>
         </div>
@@ -741,7 +741,7 @@ const AdminGallery = () => {
                   </button>
                   <button
                     onClick={confirmDelete}
-                    className="btn btn-danger"
+                    className="btn btn-error"
                   >
                     Delete
                   </button>

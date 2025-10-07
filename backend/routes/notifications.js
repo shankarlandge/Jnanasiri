@@ -173,13 +173,4 @@ router.post('/', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-// Test endpoint for CORS verification
-router.get('/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'CORS is working properly!',
-    timestamp: new Date().toISOString()
-  });
-});
-
 export default router;
