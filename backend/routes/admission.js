@@ -8,6 +8,14 @@ import NotificationService from '../utils/notificationService.js';
 
 const router = express.Router();
 
+// Helper function to normalize phone numbers
+const normalizePhoneNumber = (phone) => {
+  if (!phone) return phone;
+  const normalized = phone.trim().replace(/^\+91/, ''); // Remove +91 prefix if present
+  console.log(`Normalizing phone: "${phone}" -> "${normalized}"`);
+  return normalized;
+};
+
 // Submit admission form
 router.post('/submit', (req, res, next) => {
   uploadAdmissionDocuments(req, res, (err) => {
@@ -40,7 +48,7 @@ router.post('/submit', (req, res, next) => {
     const {
       firstName, lastName, dateOfBirth, gender, bloodGroup, nationality,
       email, phone, alternatePhone, address, city, state, pincode,
-      course, previousSchool, previousPercentage, boardOfStudy, yearOfPassing,
+      course, specialization, previousSchool, previousPercentage, boardOfStudy, yearOfPassing,
       fatherName, fatherOccupation, motherName, motherOccupation, guardianPhone,
       extracurricular, medicalHistory, specialRequirements
     } = req.body;
@@ -75,13 +83,14 @@ router.post('/submit', (req, res, next) => {
       bloodGroup: sanitizeInput(bloodGroup),
       nationality: sanitizeInput(nationality),
       email: email.toLowerCase().trim(),
-      phone: phone.trim(),
-      alternatePhone: alternatePhone?.trim(),
+      phone: normalizePhoneNumber(phone),
+      alternatePhone: normalizePhoneNumber(alternatePhone),
       address: sanitizeInput(address),
       city: sanitizeInput(city),
       state: sanitizeInput(state),
       pincode: pincode?.trim(),
       course: sanitizeInput(course),
+      specialization: sanitizeInput(specialization),
       previousSchool: sanitizeInput(previousSchool),
       previousPercentage: previousPercentage ? parseFloat(previousPercentage) : undefined,
       boardOfStudy: sanitizeInput(boardOfStudy),
@@ -90,11 +99,26 @@ router.post('/submit', (req, res, next) => {
       fatherOccupation: sanitizeInput(fatherOccupation),
       motherName: sanitizeInput(motherName),
       motherOccupation: sanitizeInput(motherOccupation),
-      guardianPhone: guardianPhone?.trim(),
+      guardianPhone: normalizePhoneNumber(guardianPhone),
       extracurricular: sanitizeInput(extracurricular),
       medicalHistory: sanitizeInput(medicalHistory),
       specialRequirements: sanitizeInput(specialRequirements)
     };
+    
+    console.log('Sanitized phone data:', sanitizedData.phone);
+    console.log('Sanitized alternatePhone data:', sanitizedData.alternatePhone);
+    console.log('Sanitized guardianPhone data:', sanitizedData.guardianPhone);
+    
+    // Test phone validation
+    const phonePattern = /^(\+91)?[6-9]\d{9}$/;
+    console.log('Phone validation test:');
+    console.log(`- Phone "${sanitizedData.phone}" matches pattern: ${phonePattern.test(sanitizedData.phone)}`);
+    if (sanitizedData.alternatePhone) {
+      console.log(`- Alternate phone "${sanitizedData.alternatePhone}" matches pattern: ${phonePattern.test(sanitizedData.alternatePhone)}`);
+    }
+    if (sanitizedData.guardianPhone) {
+      console.log(`- Guardian phone "${sanitizedData.guardianPhone}" matches pattern: ${phonePattern.test(sanitizedData.guardianPhone)}`);
+    }
     
     // Process uploaded files (optional)
     const documents = [];
@@ -134,23 +158,50 @@ router.post('/submit', (req, res, next) => {
     // Documents are optional for now
     sanitizedData.documents = documents;
     
+    console.log('Final sanitized data to be saved:', JSON.stringify(sanitizedData, null, 2));
+    
     let admission;
+    
+    console.log('Checking MongoDB connection state:', mongoose.connection.readyState);
     
     // Try MongoDB first, fallback to local storage if DB is not available
     if (mongoose.connection.readyState === 1) {
+      console.log('MongoDB is connected, proceeding with database operations...');
       // Check if email already exists in MongoDB
+      console.log('Checking for existing application with email:', sanitizedData.email);
       const existingApplication = await Admission.findOne({ email: sanitizedData.email });
+      console.log('Existing application found:', existingApplication ? 'YES' : 'NO');
       if (existingApplication) {
+        console.log('Found existing application with ID:', existingApplication._id);
         return sendError(res, 'An application with this email already exists', 400);
       }
+      console.log('No existing application found, proceeding with new application...');
       
       // Create new admission application in MongoDB
+      console.log('Creating new Admission document...');
       admission = new Admission(sanitizedData);
-      await admission.save();
+      console.log('Validating admission document...');
+      const validationError = admission.validateSync();
+      if (validationError) {
+        console.error('Validation error before save:', validationError);
+        const errors = Object.values(validationError.errors).map(err => `${err.path}: ${err.message}`);
+        return sendError(res, `Validation error: ${errors.join(', ')}`, 400);
+      }
+      console.log('Saving admission document...');
+      try {
+        const savedAdmission = await admission.save();
+        console.log('Admission document saved successfully with ID:', savedAdmission._id);
+        admission = savedAdmission;
+      } catch (saveError) {
+        console.error('Error during admission save:', saveError);
+        throw saveError;
+      }
       
       // Create notification for new admission
       try {
+        console.log('Creating admission notification...');
         await NotificationService.createAdmissionNotification(admission);
+        console.log('Admission notification created successfully');
       } catch (notificationError) {
         console.error('Failed to create admission notification:', notificationError);
         // Don't fail the admission process if notification creation fails
@@ -171,25 +222,37 @@ router.post('/submit', (req, res, next) => {
       admission = fallbackStorage.saveAdmission(sanitizedData);
     }
 
-    sendSuccess(res, {
+    console.log('Preparing success response...');
+    const responseData = {
       applicationId: admission._id,
       submittedAt: admission.submittedAt || admission.createdAt,
       status: admission.status
-    }, 'Admission application submitted successfully', 201);
+    };
+    console.log('Response data:', responseData);
+    
+    sendSuccess(res, responseData, 'Admission application submitted successfully', 201);
+    console.log('Success response sent to client');
     
   } catch (error) {
     console.error('Admission submission error:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      errors: error.errors
+    });
     
     if (error.code === 11000) {
       return sendError(res, 'An application with this email already exists', 400);
     }
     
     if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(err => err.message);
+      const errors = Object.values(error.errors).map(err => `${err.path}: ${err.message}`);
+      console.error('Validation errors:', errors);
       return sendError(res, `Validation error: ${errors.join(', ')}`, 400);
     }
     
-    sendError(res, 'Failed to submit application', 500);
+    sendError(res, `Failed to submit application: ${error.message}`, 500);
   }
 });
 

@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3002/api',
-  timeout: 10000,
+  timeout: 60000, // Increased to 60 seconds for file uploads
   headers: {
     'Content-Type': 'application/json',
   },
@@ -85,6 +85,7 @@ export const admissionAPI = {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    timeout: 120000, // 2 minutes for file uploads
   }),
   
   // Get admission status by email
@@ -98,6 +99,7 @@ export const admissionAPI = {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    timeout: 120000, // 2 minutes for file uploads
   }),
   
   // Get admission statistics

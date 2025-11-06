@@ -33,6 +33,7 @@ const AdmissionForm = () => {
     
     // Academic Information
     course: '',
+    specialization: '',
     previousSchool: '',
     previousPercentage: '',
     boardOfStudy: '',
@@ -61,6 +62,8 @@ const AdmissionForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+  const [courseSuggestions, setCourseSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const steps = [
     { number: 1, title: 'Personal Details', icon: UserIcon },
@@ -70,23 +73,98 @@ const AdmissionForm = () => {
   ];
 
   const courses = [
-    'Computer Science',
-    'Information Technology',
-    'Electronics',
-    'Mechanical Engineering',
-    'Civil Engineering',
-    'Business Administration',
-    'Commerce',
-    'Arts'
+    'PUC 1',
+    'PUC 2',
+    'B.Sc – Bachelor of Science',
+    'B.Com – Bachelor of Commerce',
+    'BBA – Bachelor of Business Administration',
+    'BCA – Bachelor of Computer Applications',
+    'BA – Bachelor of Arts',
+    'BE / B.Tech – Bachelor of Engineering / Technology',
+    'BHM – Bachelor of Hotel Management',
+    'B.Ed – Bachelor of Education',
+    'B.Pharm – Bachelor of Pharmacy',
+    'BDS – Bachelor of Dental Surgery',
+    'MBBS – Bachelor of Medicine and Surgery',
+    'B.Arch – Bachelor of Architecture',
+    'BFA / BVA – Bachelor of Fine or Visual Arts',
+    'B.Design – Bachelor of Design',
+    'LLB – Bachelor of Law',
+    'BSW – Bachelor of Social Work',
+    'M.Sc – Master of Science',
+    'M.Com – Master of Commerce',
+    'MBA – Master of Business Administration',
+    'MCA – Master of Computer Applications',
+    'MA – Master of Arts',
+    'M.Tech / ME – Master of Technology / Engineering',
+    'M.Ed – Master of Education',
+    'M.Pharm – Master of Pharmacy',
+    'LLM – Master of Law',
+    'MSW – Master of Social Work',
+    'M.Design – Master of Design',
+    'M.Arch – Master of Architecture'
   ];
+
+  const specializationOptions = {
+    'PUC 1': [
+      'Science (PCMB)',
+      'Science (PCMC)', 
+      'Science (PCME)',
+      'Commerce (CEBA)',
+      'Commerce (HEBA)',
+      'Commerce (MEBA)',
+      'Arts (HEPS)',
+      'Arts (HESP)',
+      'Arts (HEPP)',
+      'Vocational Courses'
+    ],
+    'PUC 2': [
+      'Science (PCMB)',
+      'Science (PCMC)', 
+      'Science (PCME)',
+      'Commerce (CEBA)',
+      'Commerce (HEBA)',
+      'Commerce (MEBA)',
+      'Arts (HEPS)',
+      'Arts (HESP)',
+      'Arts (HEPP)',
+      'Vocational Courses'
+    ]
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Field ${name} changed to:`, value); // Debug log
+    
+    if (name === 'course') {
+      // Filter course suggestions based on input
+      const filtered = courses.filter(course => 
+        course.toLowerCase().includes(value.toLowerCase())
+      );
+      setCourseSuggestions(filtered);
+      setShowSuggestions(value.length > 0 && filtered.length > 0);
+      
+      // Clear specialization if course changes
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        specialization: ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleCourseSelect = (selectedCourse) => {
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      course: selectedCourse,
+      specialization: ''
     }));
+    setShowSuggestions(false);
+    setCourseSuggestions([]);
   };
 
   const handleReset = () => {
@@ -105,6 +183,7 @@ const AdmissionForm = () => {
       state: '',
       pincode: '',
       course: '',
+      specialization: '',
       previousSchool: '',
       previousPercentage: '',
       boardOfStudy: '',
@@ -201,6 +280,21 @@ const AdmissionForm = () => {
       console.error('Error submitting admission:', error);
       console.error('Error response:', error.response?.data);
       console.error('Error status:', error.response?.status);
+      
+      // Show specific error message to user
+      let errorMessage = 'Failed to submit admission. Please try again.';
+      
+      if (error.response?.status === 413) {
+        errorMessage = 'The files you uploaded are too large. Please use smaller files (max 15MB each) and try again.';
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.message || 'Please check your form data and try again.';
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = 'Upload is taking too long. Please check your internet connection and try again.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      alert(errorMessage);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -549,21 +643,66 @@ const AdmissionForm = () => {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
-                    <div className="form-group">
+                    <div className="form-group relative">
                       <label className="form-label">Course Applied For *</label>
-                      <select
-                        name="course"
-                        value={formData.course}
-                        onChange={handleInputChange}
-                        className="form-select"
-                        required
-                      >
-                        <option value="">Select Course</option>
-                        {courses.map(course => (
-                          <option key={course} value={course}>{course}</option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="course"
+                          value={formData.course}
+                          onChange={handleInputChange}
+                          className="form-input pr-10"
+                          placeholder="Type to search for courses..."
+                          required
+                        />
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        
+                        {/* Course Suggestions Dropdown */}
+                        {formData.course && courseSuggestions.length > 0 && (
+                          <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto mt-1">
+                            {courseSuggestions.map((course, index) => (
+                              <div
+                                key={index}
+                                className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, course }));
+                                  setCourseSuggestions([]);
+                                }}
+                              >
+                                {course}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    
+                    {/* Conditional Specialization Field for PUC Courses */}
+                    {(formData.course === 'PUC 1' || formData.course === 'PUC 2') && (
+                      <div className="form-group">
+                        <label className="form-label">Specialization *</label>
+                        <select
+                          name="specialization"
+                          value={formData.specialization}
+                          onChange={handleInputChange}
+                          className="form-select"
+                          required
+                        >
+                          <option value="">Select Specialization</option>
+                          {Object.entries(specializationOptions).map(([category, options]) => (
+                            <optgroup key={category} label={category}>
+                              {options.map(option => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div className="form-group">
                       <label className="form-label">Previous School/College *</label>
                       <input

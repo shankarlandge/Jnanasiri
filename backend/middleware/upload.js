@@ -83,7 +83,7 @@ const documentFileFilter = (req, file, cb) => {
 export const uploadPhoto = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: imageFileFilter,
 }).single('photo');
@@ -92,7 +92,7 @@ export const uploadPhoto = multer({
 export const uploadAdmissionDocuments = multer({
   storage: documentStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit per file
+    fileSize: 15 * 1024 * 1024, // 15MB limit per file
     files: 10 // Maximum 10 files
   },
   fileFilter: documentFileFilter,
@@ -109,7 +109,7 @@ export const handleUploadError = (err, req, res, next) => {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         success: false,
-        message: 'File too large. Maximum size is 5MB.'
+        message: 'File too large. Maximum size is 15MB per file.'
       });
     }
     if (err.code === 'LIMIT_UNEXPECTED_FILE') {

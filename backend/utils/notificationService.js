@@ -16,16 +16,16 @@ class NotificationService {
     return this.createNotification({
       type: 'admission',
       title: 'New Admission Application',
-      message: `${admission.personalInfo.firstName} ${admission.personalInfo.lastName} has submitted a new admission application for ${admission.courseInfo.preferredCourse}.`,
+      message: `${admission.firstName} ${admission.lastName} has submitted a new admission application for ${admission.course}.`,
       priority: 'high',
       relatedId: admission._id,
       relatedModel: 'Admission',
       actionUrl: '/admin/admissions',
       metadata: {
-        applicantName: `${admission.personalInfo.firstName} ${admission.personalInfo.lastName}`,
-        course: admission.courseInfo.preferredCourse,
-        email: admission.personalInfo.email,
-        phone: admission.personalInfo.phone
+        applicantName: `${admission.firstName} ${admission.lastName}`,
+        course: admission.course,
+        email: admission.email,
+        phone: admission.phone
       }
     });
   }

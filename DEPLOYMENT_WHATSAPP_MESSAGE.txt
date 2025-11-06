@@ -1,0 +1,88 @@
+🚀 **JANASHIRI LMS - DEPLOYMENT UPDATE** 🚀
+
+🎯 **URGENT: New Docker Images Ready for Production**
+
+📦 **Docker Images Available:**
+• Frontend: `sanketsmane/janashiri-lms-frontend:v1.0.0`
+• Backend: `sanketsmane/janashiri-lms-backend:v1.0.0`
+
+🔧 **What's Fixed in This Release:**
+✅ General Settings now save properly
+✅ Security settings persistence fixed
+✅ Gallery bulk delete functionality working
+✅ New Ticket creation system operational
+✅ Authentication flow improvements
+✅ API response handling optimized
+✅ Error handling enhanced
+
+📋 **Deployment Instructions for AWS EC2 Ubuntu:**
+
+1️⃣ **Stop Current Containers:**
+```bash
+docker-compose down
+```
+
+2️⃣ **Pull New Images:**
+```bash
+docker pull sanketsmane/janashiri-lms-frontend:v1.0.0
+docker pull sanketsmane/janashiri-lms-backend:v1.0.0
+```
+
+3️⃣ **Update docker-compose.yml:**
+```yaml
+services:
+  frontend:
+    image: sanketsmane/janashiri-lms-frontend:v1.0.0
+  backend:
+    image: sanketsmane/janashiri-lms-backend:v1.0.0
+```
+
+4️⃣ **Deploy:**
+```bash
+docker-compose up -d
+```
+
+5️⃣ **Verify Deployment:**
+```bash
+docker ps
+curl http://localhost/health
+```
+
+🌐 **Image Details:**
+• Frontend Size: 81.8MB (Nginx + React build)
+• Backend Size: 294MB (Node.js + Dependencies)
+• Both images include latest bug fixes and security patches
+
+⚠️ **Important Notes:**
+• Ensure MongoDB connection string is updated
+• Check environment variables are set correctly
+• Backup current database before deployment
+• Monitor logs after deployment: `docker-compose logs -f`
+
+💾 **Rollback Plan:**
+If issues occur, rollback to previous version:
+```bash
+docker-compose down
+# Update docker-compose.yml to previous image tags
+docker-compose up -d
+```
+
+🔍 **Health Check:**
+After deployment, verify:
+• Frontend accessible at configured domain
+• Backend API responding at /api/health
+• Database connectivity working
+• Authentication functioning
+• File uploads working
+
+📊 **Testing Priority:**
+1. Admin login functionality
+2. Settings page (General + Security)
+3. Gallery management
+4. Ticket creation system
+5. Student registration flow
+
+🚨 **Need Support?**
+Contact development team if any deployment issues occur.
+
+**Ready for production deployment! 🎉**

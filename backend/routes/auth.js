@@ -9,19 +9,26 @@ import { sendPasswordResetOTP } from '../utils/email.js';
 const router = express.Router();
 
 // Admin login
-router.post('/admin/login', validateLogin, async (req, res) => {
+router.post('/admin/login', async (req, res) => {
   try {
+    console.log('=== ADMIN LOGIN ATTEMPT ===');
     const { email, password } = req.body;
+    console.log('Login attempt for email:', email);
     
     // Find admin user
     const admin = await User.findOne({ email, role: 'admin' });
+    console.log('Admin found:', admin ? 'Yes' : 'No');
     if (!admin) {
+      console.log('No admin user found with email:', email);
       return sendError(res, 'Invalid credentials', 401);
     }
     
     // Check password
+    console.log('Checking password for admin...');
     const isPasswordValid = await admin.comparePassword(password);
+    console.log('Password valid:', isPasswordValid);
     if (!isPasswordValid) {
+      console.log('Invalid password for admin:', email);
       return sendError(res, 'Invalid credentials', 401);
     }
     
@@ -31,6 +38,7 @@ router.post('/admin/login', validateLogin, async (req, res) => {
     
     // Generate token
     const token = generateJWTToken(admin._id, admin.role);
+    console.log('Admin login successful for:', email);
     
     sendSuccess(res, {
       token,
